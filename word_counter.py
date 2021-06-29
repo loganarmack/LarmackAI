@@ -14,9 +14,10 @@ for word in word_list:
         pair = word.lower()[i : i + 2]
 
         if not pair in two_sets:
-            two_sets[pair] = 1
+            two_sets[pair] = [1, [word.lower()]]
         else:
-            two_sets[pair] += 1
+            two_sets[pair][0] += 1
+            two_sets[pair][1].append(word.lower())
 
         # must be at least 3 characters left in string
         if i + 2 < len(word):
@@ -24,19 +25,20 @@ for word in word_list:
             triple = word.lower()[i : i + 3]
 
             if not triple in three_sets:
-                three_sets[triple] = 1
+                three_sets[triple] = [1, [word.lower()]]
             else:
-                three_sets[triple] += 1
+                three_sets[triple][0] += 1
+                three_sets[triple][1].append(word.lower())
 
 # Remove all entries less than MIN_WORDS:
-trimmed_two_set = {k: v for k, v in two_sets.items() if v > constant.MIN_WORDS}
-trimmed_three_set = {k: v for k, v in three_sets.items() if v > constant.MIN_WORDS}
+trimmed_two_set = {k: v for k, v in two_sets.items() if v[0] > constant.MIN_WORDS}
+trimmed_three_set = {k: v for k, v in three_sets.items() if v[0] > constant.MIN_WORDS}
 
 sorted_two = {
-    k: v for k, v in sorted(trimmed_two_set.items(), reverse=True, key=lambda item: item[1])
+    k: v for k, v in sorted(trimmed_two_set.items(), reverse=True, key=lambda item: item[1][0])
 }
 sorted_three = {
-    k: v for k, v in sorted(trimmed_three_set.items(), reverse=True, key=lambda item: item[1])
+    k: v for k, v in sorted(trimmed_three_set.items(), reverse=True, key=lambda item: item[1][0])
 }
 
 # export the list of substring frequencies to a csv
@@ -48,10 +50,10 @@ def export_frequencies(two_set, three_set):
     three_file.write("Triplet, Occurances\n")
 
     for pair in two_set:
-        two_file.write("%s, %d\n" % (pair, two_set[pair]))
+        two_file.write("%s, %d\n" % (pair, two_set[pair][0]))
 
     for triplet in three_set:
-        three_file.write("%s, %d\n" % (triplet, three_set[triplet]))
+        three_file.write("%s, %d\n" % (triplet, three_set[triplet][0]))
 
     two_file.close()
     three_file.close()
@@ -71,7 +73,7 @@ def get_levels(substr_set, num_levels):
     for i, substr in enumerate(substr_set):
         if curr_level < len(cutoffs) and i > cutoffs[curr_level]:
             curr_level += 1
-        levels[curr_level].append(substr)
+        levels[curr_level].append([substr, substr_set[substr][1]])
 
     return levels
 
