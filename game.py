@@ -1,23 +1,33 @@
-from word_counter import get_pair_levels, get_triplet_levels
+from word_counter import get_pair_levels, get_triplet_levels, export_levels
 from nltk.corpus import words
 from random import randint, choice
 import constant
+import json
+from pathlib import Path
 from math import floor
+from pprint import pprint
 
 
-class Game():
+class Game:
     word_list = words.words()
-    levels = {2: get_pair_levels(constant.LEVELS),
-              3: get_triplet_levels(constant.LEVELS)}
+    levels = {}
 
     def __init__(self):
+        try:
+            f = open("levels.json", "r")
+            Game.levels = json.load(f)
+        except FileNotFoundError:
+            export_levels(constant.LEVELS)
+            Game.levels = {
+                '2': get_pair_levels(constant.LEVELS),
+                '3': get_triplet_levels(constant.LEVELS),
+            }
         self.__reset()
 
     def choose_substr(self):
         self.substr_level = self.weighted_random(self.level_weights)
         self.substr_length = self.weighted_random(self.length_weights)
-        self.substr = choice(
-            self.levels[self.substr_length][self.substr_level])
+        self.substr = choice(Game.levels[str(self.substr_length)][self.substr_level])
 
     @staticmethod
     def weighted_random(weights):
@@ -31,13 +41,16 @@ class Game():
     def start(self):
         self.__reset()
 
-        while(self.lives > 0):
+        while self.lives > 0:
             self.choose_substr()
 
-            user_word = input("Enter a word containing %s (level = %s):\n" % (
-                self.substr, self.substr_level)).lower()
+            user_word = input(
+                "Enter a word containing %s (level = %s):\n"
+                % (self.substr, self.substr_level)
+            ).lower()
 
-            if (user_word
+            if (
+                user_word
                 and user_word not in self.used_words
                 and user_word in Game.word_list
                 and self.substr in user_word
@@ -69,10 +82,8 @@ class Game():
     def __increment_weights(self):
         for level in self.level_weights:
             if level != constant.LEVELS - 1:
-                self.level_weights[level +
-                                   1] += floor(self.level_weights[level] / 10.0)
-                self.level_weights[level] = floor(
-                    self.level_weights[level] * 9 / 10.0)
+                self.level_weights[level + 1] += floor(self.level_weights[level] / 10.0)
+                self.level_weights[level] = floor(self.level_weights[level] * 9 / 10.0)
 
         self.length_weights[3] += floor(self.length_weights[2] / 10.0)
         self.length_weights[2] = floor(self.length_weights[2] * 9 / 10.0)

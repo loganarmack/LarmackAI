@@ -2,6 +2,9 @@
 A word game in which the user is given a random substring and must enter
 a real word containing the substring.
 
+## Prerequisites:
+Python, pipenv
+
 ## To install packages:
 `$ pipenv install`
 

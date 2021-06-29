@@ -1,1 +1,3 @@
 LEVELS = 5
+MIN_WORDS = 100
+
