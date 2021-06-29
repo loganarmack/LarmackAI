@@ -1,5 +1,5 @@
 from word_counter import get_pair_levels, get_triplet_levels, export_levels
-from nltk.corpus import words
+import enchant
 from random import randint, choice
 import constant
 import json
@@ -9,8 +9,9 @@ from pprint import pprint
 
 
 class Game:
-    word_list = words.words()
+    eng_dict = enchant.Dict("en_US")
     levels = {}
+    letter_set = set([chr(i) for i in range(ord('a'), ord('a') + 26)])
 
     def __init__(self):
         try:
@@ -24,47 +25,26 @@ class Game:
             }
         self.__reset()
 
-    def choose_substr(self):
+    def __reset(self):
+        self.points = 0
+        self.lives = 3
+        self.used_words = set()
+        self.used_letters = set()
+        self.level_weights = {0: 1000, 1: 0, 2: 0, 3: 0, 4: 0}
+        self.length_weights = {2: 100, 3: 0}
+        self.substr = "ng"
+        self.possible_word = "ping"
+        self.substr_level = 0
+        self.substr_length = 2
+
+    def __choose_substr(self):
         self.substr_level = self.weighted_random(self.level_weights)
         self.substr_length = self.weighted_random(self.length_weights)
         random_choice = choice(Game.levels[str(self.substr_length)][self.substr_level])
         self.substr = random_choice[0]
         self.possible_word = choice(random_choice[1])
 
-    @staticmethod
-    def weighted_random(weights):
-        total = sum(weights[level] for level in weights)
-        r = randint(1, total)
-        for level in weights:
-            r -= weights[level]
-            if r <= 0:
-                return level
-
-    def start(self):
-        self.__reset()
-
-        while self.lives > 0:
-            self.choose_substr()
-
-            user_word = input(
-                "Enter a word containing %s (level = %s):\n"
-                % (self.substr, self.substr_level)
-            ).lower()
-
-            correct, reason = self.check_word(user_word)
-            if correct:
-                self.score_word(user_word)
-                print("New score:", self.points)
-                self.used_words.append(user_word)
-                self.__increment_weights()
-            else:
-                print(reason)
-                print(f"A possible word for this was {self.possible_word}")
-                self.lives -= 1
-
-        print("Game over. Your score is", self.points)
-
-    def check_word(self, user_word): 
+    def __check_word(self, user_word): 
         correct = True
         reason = None
         if not user_word:
@@ -75,7 +55,7 @@ class Game:
             correct = False
             reason = "You've already used that word!"
 
-        elif user_word not in Game.word_list:
+        elif not Game.eng_dict.check(user_word):
             correct = False
             reason = "That's not a real word!"
 
@@ -85,14 +65,16 @@ class Game:
         
         return [correct, reason]
 
-    def score_word(self, word):
+    def __score_word(self, word):
         base = 100  # default for valid word
         base += 10 * len(word)  # bonus for making longer words
         if word[:2] != self.substr and word[:3] != self.substr:
             base += 50  # bonus for not starting word with substring
         bonus_mult = self.substr_level / 4.0  # substr difficulty multiplier
         bonus_mult += (self.substr_length - 2) / 2.0  # substr length multiplier
-        self.points += base * (bonus_mult + 1)
+        total = base * (bonus_mult + 1)
+        self.points += total
+        return total
 
     def __increment_weights(self):
         for level in self.level_weights:
@@ -103,16 +85,57 @@ class Game:
         self.length_weights[3] += floor(self.length_weights[2] / 10.0)
         self.length_weights[2] = floor(self.length_weights[2] * 9 / 10.0)
 
-    def __reset(self):
-        self.points = 0
-        self.lives = 3
-        self.used_words = []
-        self.level_weights = {0: 1000, 1: 0, 2: 0, 3: 0, 4: 0}
-        self.length_weights = {2: 100, 3: 0}
-        self.substr = "ng"
-        self.possible_word = "ping"
-        self.substr_level = 0
-        self.substr_length = 2
+    def __update_used_letters(self, user_word):
+        for letter in user_word.lower():
+            self.used_letters.add(letter)
+        
+        if len(self.used_letters) == 26:
+            self.used_letters = set()
+
+            if self.lives < constant.MAX_LIVES:
+                self.lives += 1
+                print("You've gained a life from using each letter at least once!")
+                print(f"New lives: {self.lives}")
+            
+
+    def start(self):
+        self.__reset()
+
+        while self.lives > 0:
+            self.__choose_substr()
+
+            user_word = input(
+                "Enter a word containing %s (level = %s):\n"
+                % (self.substr, self.substr_level)
+            ).lower()
+
+            correct, reason = self.__check_word(user_word)
+            if correct:
+                word_value = self.__score_word(user_word)
+                self.__increment_weights()
+                self.used_words.add(user_word)
+                self.__update_used_letters(user_word)
+
+
+                print(sorted(Game.letter_set - self.used_letters))
+                print(f"Nice job! You earned {word_value} points.\nNew score: {self.points}")
+            else:
+                self.lives -= 1
+
+                print(reason)
+                print(f"A possible word for this was {self.possible_word}")
+                print(f"New lives: {self.lives}")
+
+        print("Game over. Your score is", self.points)
+
+    @staticmethod
+    def weighted_random(weights):
+        total = sum(weights[level] for level in weights)
+        r = randint(1, total)
+        for level in weights:
+            r -= weights[level]
+            if r <= 0:
+                return level
 
 
 game = Game()

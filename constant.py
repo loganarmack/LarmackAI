@@ -1,3 +1,3 @@
 LEVELS = 5
 MIN_WORDS = 100
-
+MAX_LIVES = 5
