@@ -10,6 +10,7 @@ class LarmackBot(commands.Bot):
         super().__init__(command_prefix, case_insensitive=True)
     
         self.add_cog(GameCommands(self))
+        SubstrGame.load()
         
     async def on_ready(self):
         print(f'{self.user} has connected to Discord!')

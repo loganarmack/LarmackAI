@@ -22,6 +22,7 @@ class GameCommands(commands.Cog):
         if user_id not in self.game_list:
             await ctx.send("No game is currently running!")
         else:
+            self.game_list[user_id].stop()
             self.game_list.pop(user_id)
             await ctx.send("Game stopped.")
 
@@ -35,7 +36,8 @@ class GameCommands(commands.Cog):
             result, substr = self.game_list[user_id].game.submit_word(message.content.lower())
             await message.channel.send(content=self.__game_update_message(user_id, result, substr))
 
-            if self.game_list[user_id].game.game_over(): #Game over
+            if self.game_list[user_id].game.game_over():
+                self.game_list[user_id].stop()
                 self.game_list.pop(user_id)
 
     def __game_update_message(self, user_id, result, substr):
@@ -57,4 +59,5 @@ class GameCommands(commands.Cog):
         await channel.send(self.__game_update_message(user_id, result, substr))
         
         if self.game_list[user_id].game.game_over():
+            self.game_list[user_id].stop()
             self.game_list.pop(user_id)

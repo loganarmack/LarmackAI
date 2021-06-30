@@ -6,4 +6,7 @@ class GameManager:
         self.channel_id = channel_id
         self.user_id = user_id
 
+    def stop(self):
+        self.game.stop()
+
         

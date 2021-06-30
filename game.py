@@ -11,15 +11,7 @@ class SubstrGame:
 
     def __init__(self):
         if not SubstrGame.levels:
-            try:
-                f = open("levels.json", "r")
-                SubstrGame.levels = json.load(f)
-            except FileNotFoundError:
-                export_levels(constant.LEVELS)
-                SubstrGame.levels = {
-                    '2': get_pair_levels(constant.LEVELS),
-                    '3': get_triplet_levels(constant.LEVELS),
-                }
+            SubstrGame.load()
 
         self.__reset()
 
@@ -148,6 +140,10 @@ class SubstrGame:
         self.__next_round()
         return self.substr
 
+    def stop(self):
+        if self.timer:
+            self.timer.cancel()
+
     def game_over(self):
         return self.lives <= 0      
 
@@ -159,3 +155,15 @@ class SubstrGame:
             r -= weights[level]
             if r <= 0:
                 return level
+
+    @staticmethod
+    def load():
+        try:
+            f = open("levels.json", "r")
+            SubstrGame.levels = json.load(f)
+        except FileNotFoundError:
+            export_levels(constant.LEVELS)
+            SubstrGame.levels = {
+                '2': get_pair_levels(constant.LEVELS),
+                '3': get_triplet_levels(constant.LEVELS),
+            }
