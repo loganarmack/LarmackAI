@@ -8,43 +8,46 @@ def load_words():
     
     return valid_words
 
-word_list = load_words()
-two_sets = {}
-three_sets = {}
+def get_sorted_sets():
+    word_list = load_words()
+    two_sets = {}
+    three_sets = {}
 
-# Counts frequency of each 2- and 3-length substring
-for word in word_list:
-    for i in range(len(word) - 1):
-        # gets lowercase substring of length 2
-        pair = word.lower()[i : i + 2]
+    # Counts frequency of each 2- and 3-length substring
+    for word in word_list:
+        for i in range(len(word) - 1):
+            # gets lowercase substring of length 2
+            pair = word.lower()[i : i + 2]
 
-        if not pair in two_sets:
-            two_sets[pair] = [1, [word.lower()]]
-        else:
-            two_sets[pair][0] += 1
-            two_sets[pair][1].append(word.lower())
-
-        # must be at least 3 characters left in string
-        if i + 2 < len(word):
-            # gets lowercase substring of length 3
-            triple = word.lower()[i : i + 3]
-
-            if not triple in three_sets:
-                three_sets[triple] = [1, [word.lower()]]
+            if not pair in two_sets:
+                two_sets[pair] = [1, [word.lower()]]
             else:
-                three_sets[triple][0] += 1
-                three_sets[triple][1].append(word.lower())
+                two_sets[pair][0] += 1
+                two_sets[pair][1].append(word.lower())
 
-# Remove all entries less than MIN_WORDS:
-trimmed_two_set = {k: v for k, v in two_sets.items() if v[0] > constant.MIN_WORDS}
-trimmed_three_set = {k: v for k, v in three_sets.items() if v[0] > constant.MIN_WORDS}
+            # must be at least 3 characters left in string
+            if i + 2 < len(word):
+                # gets lowercase substring of length 3
+                triple = word.lower()[i : i + 3]
 
-sorted_two = {
-    k: v for k, v in sorted(trimmed_two_set.items(), reverse=True, key=lambda item: item[1][0])
-}
-sorted_three = {
-    k: v for k, v in sorted(trimmed_three_set.items(), reverse=True, key=lambda item: item[1][0])
-}
+                if not triple in three_sets:
+                    three_sets[triple] = [1, [word.lower()]]
+                else:
+                    three_sets[triple][0] += 1
+                    three_sets[triple][1].append(word.lower())
+
+    # Remove all entries less than MIN_WORDS:
+    trimmed_two_set = {k: v for k, v in two_sets.items() if v[0] > constant.MIN_WORDS}
+    trimmed_three_set = {k: v for k, v in three_sets.items() if v[0] > constant.MIN_WORDS}
+
+    sorted_two = {
+        k: v for k, v in sorted(trimmed_two_set.items(), reverse=True, key=lambda item: item[1][0])
+    }
+    sorted_three = {
+        k: v for k, v in sorted(trimmed_three_set.items(), reverse=True, key=lambda item: item[1][0])
+    }
+
+    return sorted_two, sorted_three
 
 # export the list of substring frequencies to a csv
 def export_frequencies(two_set, three_set):
@@ -67,7 +70,7 @@ def export_frequencies(two_set, three_set):
 # break down a set of substrings into separate levels based on frequency
 def get_levels(substr_set, num_levels):
     # initialize levels to be list of 5 empty lists
-    levels = [[] for _ in range(num_levels)]
+    levels = [{} for _ in range(num_levels)]
 
     # set cutoffs at certain percentage threshholds number of levels
     # 50%, 25%, 12.5%, etc.
@@ -78,7 +81,7 @@ def get_levels(substr_set, num_levels):
     for i, substr in enumerate(substr_set):
         if curr_level < len(cutoffs) and i > cutoffs[curr_level]:
             curr_level += 1
-        levels[curr_level].append([substr, substr_set[substr][1]])
+        levels[curr_level][substr] = substr_set[substr][1]
 
     return levels
 
@@ -96,8 +99,13 @@ def export_levels(num_levels):
 
 
 def get_pair_levels(num_levels):
+    sorted_two, _ = get_sorted_sets()
     return get_levels(sorted_two, num_levels)
 
 
 def get_triplet_levels(num_levels):
+    _, sorted_three = get_sorted_sets()
     return get_levels(sorted_three, num_levels)
+
+
+#export_levels(constant.LEVELS)

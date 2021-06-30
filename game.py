@@ -4,23 +4,25 @@ import constant
 import json
 from math import floor
 from timer import Timer
+import enchant
 
 
 class SubstrGame:
-    word_list = load_words()
     levels = {}
     letter_set = set([chr(i) for i in range(ord('a'), ord('a') + 26)])
 
     def __init__(self):
-        try:
-            f = open("levels.json", "r")
-            SubstrGame.levels = json.load(f)
-        except FileNotFoundError:
-            export_levels(constant.LEVELS)
-            SubstrGame.levels = {
-                '2': get_pair_levels(constant.LEVELS),
-                '3': get_triplet_levels(constant.LEVELS),
-            }
+        if not SubstrGame.levels:
+            try:
+                f = open("levels.json", "r")
+                SubstrGame.levels = json.load(f)
+            except FileNotFoundError:
+                export_levels(constant.LEVELS)
+                SubstrGame.levels = {
+                    '2': get_pair_levels(constant.LEVELS),
+                    '3': get_triplet_levels(constant.LEVELS),
+                }
+
         self.__reset()
 
     def __reset(self):
@@ -41,9 +43,8 @@ class SubstrGame:
     def __choose_substr(self):
         self.substr_level = self.weighted_random(self.level_weights)
         self.substr_length = self.weighted_random(self.length_weights)
-        random_choice = choice(SubstrGame.levels[str(self.substr_length)][self.substr_level])
-        self.substr = random_choice[0]
-        self.possible_word = choice(random_choice[1])
+        self.substr = choice(list(SubstrGame.levels[str(self.substr_length)][self.substr_level].keys()))
+        self.possible_word = choice(SubstrGame.levels[str(self.substr_length)][self.substr_level][self.substr])
 
     def __check_word(self, user_word): 
         correct = True
@@ -56,13 +57,13 @@ class SubstrGame:
             correct = False
             reason = "You've already used that word!"
 
-        elif user_word not in SubstrGame.word_list:
-            correct = False
-            reason = "That's not a real word!"
-
         elif self.substr not in user_word:
             correct = False
             reason = f"Your word doesn't use {self.substr}!"
+
+        elif user_word not in SubstrGame.levels[str(self.substr_length)][self.substr_level][self.substr]:
+            correct = False
+            reason = "That's not a real word!"
         
         return [correct, reason]
 
@@ -85,7 +86,7 @@ class SubstrGame:
 
         self.length_weights[3] += floor(self.length_weights[2] / 10.0)
         self.length_weights[2] = floor(self.length_weights[2] * 9 / 10.0)
-        self.guess_time = max(constant.MIN_TIME_SECONDS, self.guess_time * 9 / 10.0)
+        #self.guess_time = max(constant.MIN_TIME_SECONDS, self.guess_time * 9 / 10.0)
 
     def __update_used_letters(self, user_word):
         for letter in user_word.lower():
@@ -103,8 +104,6 @@ class SubstrGame:
         return sorted(SubstrGame.letter_set - self.used_letters)
 
     def __next_round(self):
-        if self.timer:
-            self.timer.cancel()
         if self.lives <= 0:
             return "Game Over"
         else:
@@ -123,6 +122,9 @@ class SubstrGame:
             await self.timeout_callback(result, "Game Over")
 
     def submit_word(self, user_word):
+        if self.timer:
+            self.timer.cancel()
+
         result = ''
 
         correct, reason = self.__check_word(user_word)
