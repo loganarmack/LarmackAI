@@ -41,14 +41,15 @@ class GameCommands(commands.Cog):
                 self.game_list.pop(user_id)
 
     def __game_update_message(self, user_id, result, substr):
-        message = "```"
-        message += f"{result}\n"
+        message = "```ml\n"
+        if result:
+            message += f"{result}\n"
         message += f"Remaining letters: {self.game_list[user_id].game.get_remaining_letters()}\n"
-        message += f"Lives: Lives: {self.game_list[user_id].game.lives}\n"
+        message += f"Lives: {self.game_list[user_id].game.lives}\n"
         message += f"Score: {self.game_list[user_id].game.points}\n"
 
         if not self.game_list[user_id].game.game_over():
-            message += f"Enter a word containing {substr} (time: {self.game_list[user_id].game.guess_time}s)\n"
+            message += f"Enter a word containing '{substr}' (time: {self.game_list[user_id].game.guess_time}s)\n"
         else:
             message += "GAME OVER\n"
 
