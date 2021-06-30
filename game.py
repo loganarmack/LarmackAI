@@ -4,8 +4,6 @@ import constant
 import json
 from math import floor
 from timer import Timer
-import enchant
-
 
 class SubstrGame:
     levels = {}
