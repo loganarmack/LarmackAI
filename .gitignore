@@ -132,6 +132,5 @@ dmypy.json
 .vscode/
 
 # dev files 
-levels.json
 *.csv
 TODO
