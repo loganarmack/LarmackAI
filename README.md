@@ -1,6 +1,5 @@
-# SubstringGame
-A word game in which the user is given a random substring and must enter
-a real word containing the substring.
+# LarmackAI
+A discord bot originally created as an interface for my substring game.
 
 ## Prerequisites:
 Python, pipenv
@@ -15,7 +14,10 @@ $ python
 >>> nltk.download('words')
 ```
 
-You can then run the game with 
-`pipenv run python game.py`
+You will need to define your own discord bot key in a .env file,
+created in the root directory.
+
+You can then run the bot with 
+`pipenv run python bot.py`
 
 
