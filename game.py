@@ -36,6 +36,7 @@ class SubstrGame:
         self.possible_word = "ping"
         self.substr_level = 0
         self.substr_length = 2
+        self.started = False
 
     def __choose_substr(self):
         self.substr_level = self.weighted_random(self.level_weights)
@@ -96,37 +97,52 @@ class SubstrGame:
                 self.lives += 1
                 print("You've gained a life from using each letter at least once!")
                 print(f"New lives: {self.lives}")
-            
+
+    def get_remaining_letters(self):
+        return sorted(SubstrGame.letter_set - self.used_letters)
+
+    def submit_word(self, user_word):
+        if not self.started:
+            return
+
+        result = ''
+
+        correct, reason = self.__check_word(user_word)
+        if correct:
+            word_value = self.__score_word(user_word)
+            self.__increment_weights()
+            self.used_words.add(user_word)
+            self.__update_used_letters(user_word)
+
+            result = f"Nice job! You earned {word_value} points."
+        
+        else:
+            self.lives -= 1
+
+            result = reason + f"\nA possible word for this was {self.possible_word}"
+
+        return result, self.__next_round()
+
+    def __next_round(self):
+        if self.lives <= 0:
+            self.end()
+            return "Game Over"
+        else:
+            self.__choose_substr()
+            return self.substr
+
 
     def start(self):
         self.__reset()
 
-        while self.lives > 0:
-            self.__choose_substr()
+        self.started = True
+        self.__choose_substr()
 
-            user_word = input(
-                "Enter a word containing %s (level = %s):\n"
-                % (self.substr, self.substr_level)
-            ).lower()
+        return self.substr
 
-            correct, reason = self.__check_word(user_word)
-            if correct:
-                word_value = self.__score_word(user_word)
-                self.__increment_weights()
-                self.used_words.add(user_word)
-                self.__update_used_letters(user_word)
-
-
-                print(sorted(SubstrGame.letter_set - self.used_letters))
-                print(f"Nice job! You earned {word_value} points.\nNew score: {self.points}")
-            else:
-                self.lives -= 1
-
-                print(reason)
-                print(f"A possible word for this was {self.possible_word}")
-                print(f"New lives: {self.lives}")
-
-        print("Game over. Your score is", self.points)
+    def end(self):
+        self.started = False
+        
 
     @staticmethod
     def weighted_random(weights):

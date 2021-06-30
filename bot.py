@@ -7,7 +7,7 @@ from game_commands import GameCommands
 
 class LarmackBot(commands.Bot):
     def __init__(self, command_prefix):
-        super().__init__(command_prefix)
+        super().__init__(command_prefix, case_insensitive=True)
     
         self.add_cog(GameCommands(self))
         
