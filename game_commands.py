@@ -1,57 +1,57 @@
 from discord.ext import commands
-from game import SubstrGame
+from game_manager import GameManager
 
 class GameCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.substr_game = SubstrGame()
-        self.started = False
+        self.game_list = {}
 
     @commands.command()
     async def start(self, ctx):
-        if not self.started:
-            substr = self.substr_game.start(self.__timeout)
-            self.started = True
-            await ctx.send(self.__game_update_message('', substr))
+        user_id = ctx.message.author.id
+        if user_id in self.game_list:
+            await ctx.send("You already have a game running!")
         else:
-            await ctx.send("The game is already running!")
+            self.game_list[user_id] = GameManager(user_id, ctx.channel.id)
+            substr = self.game_list[user_id].game.start(lambda r, s: self.__timeout(user_id, r, s))
+            await ctx.send(self.__game_update_message(user_id, '', substr))
 
     @commands.command()
     async def stop(self, ctx):
-        if not self.started:
+        user_id = ctx.message.author.id
+        if user_id not in self.game_list:
             await ctx.send("No game is currently running!")
         else:
-            self.started = False
-            self.substr_game.end()
+            self.game_list.pop(user_id)
             await ctx.send("Game stopped.")
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        if message.author == self.bot.user or message.content[0] == '!': #TODO: get prefix programmatically
+        if message.author == self.bot.user or message.content and message.content[0] == '!': #TODO: get prefix programmatically
             return
 
-        if self.started:
-            result, substr = self.substr_game.submit_word(message.content.lower())
-            await message.channel.send(content=self.__game_update_message(result, substr))
+        user_id = message.author.id
+        if user_id in self.game_list and message.channel.id == self.game_list[user_id].channel_id:
+            result, substr = self.game_list[user_id].game.submit_word(message.content.lower())
+            await message.channel.send(content=self.__game_update_message(user_id, result, substr))
 
-        else:
-            await message.channel.send("The game is not currently running.")
+            if self.game_list[user_id].game.game_over(): #Game over
+                self.game_list.pop(user_id)
 
-    def __game_update_message(self, result, substr):
+    def __game_update_message(self, user_id, result, substr):
         message = "```"
         message += f"{result}\n"
-        message += f"Remaining letters: {self.substr_game.get_remaining_letters()}\n"
-        message += f"Lives: Lives: {self.substr_game.lives}\n"
-        message += f"Score: {self.substr_game.points}\n"
+        message += f"Remaining letters: {self.game_list[user_id].game.get_remaining_letters()}\n"
+        message += f"Lives: Lives: {self.game_list[user_id].game.lives}\n"
+        message += f"Score: {self.game_list[user_id].game.points}\n"
 
-        if self.substr_game.lives > 0:
-            message += f"Enter a word containing {substr}\n"
+        if not self.game_list[user_id].game.game_over():
+            message += f"Enter a word containing {substr} (time: {self.game_list[user_id].game.guess_time}s)\n"
         else:
-            self.substr_game.end()
-            self.started = False
             message += "GAME OVER\n"
 
         return message + "```"
 
-    def __timeout(self, result, substr):
-        print(self.__game_update_message(result, substr))
+    async def __timeout(self, user_id, result, substr):
+        channel = self.bot.get_channel(self.game_list[user_id].channel_id)
+        await channel.send(self.__game_update_message(user_id, result, substr))

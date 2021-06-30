@@ -4,7 +4,7 @@ from random import randint, choice
 import constant
 import json
 from math import floor
-from threading import Timer
+from timer import Timer
 
 
 class SubstrGame:
@@ -38,7 +38,6 @@ class SubstrGame:
         self.guess_time = 15
         self.timer = None
         self.timeout_callback = None
-        self.started = False
 
     def __choose_substr(self):
         self.substr_level = self.weighted_random(self.level_weights)
@@ -87,6 +86,7 @@ class SubstrGame:
 
         self.length_weights[3] += floor(self.length_weights[2] / 10.0)
         self.length_weights[2] = floor(self.length_weights[2] * 9 / 10.0)
+        self.guess_time = max(constant.MIN_TIME_SECONDS, self.guess_time * 9 / 10.0)
 
     def __update_used_letters(self, user_word):
         for letter in user_word.lower():
@@ -104,27 +104,26 @@ class SubstrGame:
         return sorted(SubstrGame.letter_set - self.used_letters)
 
     def __next_round(self):
+        if self.timer:
+            self.timer.cancel()
         if self.lives <= 0:
-            self.end()
             return "Game Over"
         else:
-            if self.timer:
-                self.timer.cancel()
-            else:
-                self.timer = Timer(self.guess_time, self.__on_timeout).start()
+            self.timer = Timer(self.guess_time, self.__on_timeout)
             self.__choose_substr()
             return self.substr
 
-    def __on_timeout(self):
+    async def __on_timeout(self):
         self.lives -= 1
-        result = "You're out of time! \nA possible word for this was {self.possible_word}"
-        substr = self.__next_round()
-        self.timeout_callback(result, substr)
+        result = f"You're out of time! \nA possible word for this was {self.possible_word}"
+        if self.lives > 0:
+            self.__choose_substr()
+            await self.timeout_callback(result, self.substr)
+            self.timer = Timer(self.guess_time, self.__on_timeout)
+        else:
+            await self.timeout_callback(result, "Game Over")
 
     def submit_word(self, user_word):
-        if not self.started:
-            return
-
         result = ''
 
         correct, reason = self.__check_word(user_word)
@@ -145,15 +144,13 @@ class SubstrGame:
 
     def start(self, timeout_callback):
         self.__reset()
-        self.started = True
         self.timeout_callback = timeout_callback
 
         self.__next_round()
         return self.substr
 
-    def end(self):
-        self.started = False
-        
+    def game_over(self):
+        return self.lives <= 0      
 
     @staticmethod
     def weighted_random(weights):

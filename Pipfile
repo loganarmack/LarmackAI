@@ -8,6 +8,7 @@ nltk = "*"
 pyenchant = "*"
 "discord.py" = "*"
 python-dotenv = "*"
+asyncio = "*"
 
 [dev-packages]
 
