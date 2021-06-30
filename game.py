@@ -1,5 +1,4 @@
-from word_counter import get_pair_levels, get_triplet_levels, export_levels
-import enchant
+from word_counter import get_pair_levels, get_triplet_levels, export_levels, load_words
 from random import randint, choice
 import constant
 import json
@@ -8,7 +7,7 @@ from timer import Timer
 
 
 class SubstrGame:
-    eng_dict = enchant.Dict("en_US")
+    word_list = load_words()
     levels = {}
     letter_set = set([chr(i) for i in range(ord('a'), ord('a') + 26)])
 
@@ -57,7 +56,7 @@ class SubstrGame:
             correct = False
             reason = "You've already used that word!"
 
-        elif not SubstrGame.eng_dict.check(user_word):
+        elif user_word not in SubstrGame.word_list:
             correct = False
             reason = "That's not a real word!"
 

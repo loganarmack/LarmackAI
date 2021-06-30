@@ -1,9 +1,14 @@
-from nltk.corpus import words
 from math import floor
 import constant
 import json
 
-word_list = words.words()
+def load_words():
+    with open('words_alpha.txt', 'r') as word_file:
+        valid_words = set(word_file.read().split())
+    
+    return valid_words
+
+word_list = load_words()
 two_sets = {}
 three_sets = {}
 
