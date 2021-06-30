@@ -8,7 +8,7 @@ from math import floor
 from pprint import pprint
 
 
-class Game:
+class SubstrGame:
     eng_dict = enchant.Dict("en_US")
     levels = {}
     letter_set = set([chr(i) for i in range(ord('a'), ord('a') + 26)])
@@ -16,10 +16,10 @@ class Game:
     def __init__(self):
         try:
             f = open("levels.json", "r")
-            Game.levels = json.load(f)
+            SubstrGame.levels = json.load(f)
         except FileNotFoundError:
             export_levels(constant.LEVELS)
-            Game.levels = {
+            SubstrGame.levels = {
                 '2': get_pair_levels(constant.LEVELS),
                 '3': get_triplet_levels(constant.LEVELS),
             }
@@ -40,7 +40,7 @@ class Game:
     def __choose_substr(self):
         self.substr_level = self.weighted_random(self.level_weights)
         self.substr_length = self.weighted_random(self.length_weights)
-        random_choice = choice(Game.levels[str(self.substr_length)][self.substr_level])
+        random_choice = choice(SubstrGame.levels[str(self.substr_length)][self.substr_level])
         self.substr = random_choice[0]
         self.possible_word = choice(random_choice[1])
 
@@ -55,7 +55,7 @@ class Game:
             correct = False
             reason = "You've already used that word!"
 
-        elif not Game.eng_dict.check(user_word):
+        elif not SubstrGame.eng_dict.check(user_word):
             correct = False
             reason = "That's not a real word!"
 
@@ -117,7 +117,7 @@ class Game:
                 self.__update_used_letters(user_word)
 
 
-                print(sorted(Game.letter_set - self.used_letters))
+                print(sorted(SubstrGame.letter_set - self.used_letters))
                 print(f"Nice job! You earned {word_value} points.\nNew score: {self.points}")
             else:
                 self.lives -= 1
@@ -136,7 +136,3 @@ class Game:
             r -= weights[level]
             if r <= 0:
                 return level
-
-
-game = Game()
-game.start()
