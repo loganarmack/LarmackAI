@@ -1,6 +1,5 @@
 from discord.ext import commands
 from game import SubstrGame
-import constant
 
 class GameCommands(commands.Cog):
     def __init__(self, bot):
@@ -11,7 +10,7 @@ class GameCommands(commands.Cog):
     @commands.command()
     async def start(self, ctx):
         if not self.started:
-            substr = self.substr_game.start()
+            substr = self.substr_game.start(self.__timeout)
             self.started = True
             await ctx.send(self.__game_update_message('', substr))
         else:
@@ -40,9 +39,9 @@ class GameCommands(commands.Cog):
 
     def __game_update_message(self, result, substr):
         message = "```"
+        message += f"{result}\n"
         message += f"Remaining letters: {self.substr_game.get_remaining_letters()}\n"
         message += f"Lives: Lives: {self.substr_game.lives}\n"
-        message += f"{result}\n"
         message += f"Score: {self.substr_game.points}\n"
 
         if self.substr_game.lives > 0:
@@ -53,3 +52,6 @@ class GameCommands(commands.Cog):
             message += "GAME OVER\n"
 
         return message + "```"
+
+    def __timeout(self, result, substr):
+        print(self.__game_update_message(result, substr))

@@ -3,9 +3,8 @@ import enchant
 from random import randint, choice
 import constant
 import json
-from pathlib import Path
 from math import floor
-from pprint import pprint
+from threading import Timer
 
 
 class SubstrGame:
@@ -36,6 +35,9 @@ class SubstrGame:
         self.possible_word = "ping"
         self.substr_level = 0
         self.substr_length = 2
+        self.guess_time = 15
+        self.timer = None
+        self.timeout_callback = None
         self.started = False
 
     def __choose_substr(self):
@@ -101,6 +103,24 @@ class SubstrGame:
     def get_remaining_letters(self):
         return sorted(SubstrGame.letter_set - self.used_letters)
 
+    def __next_round(self):
+        if self.lives <= 0:
+            self.end()
+            return "Game Over"
+        else:
+            if self.timer:
+                self.timer.cancel()
+            else:
+                self.timer = Timer(self.guess_time, self.__on_timeout).start()
+            self.__choose_substr()
+            return self.substr
+
+    def __on_timeout(self):
+        self.lives -= 1
+        result = "You're out of time! \nA possible word for this was {self.possible_word}"
+        substr = self.__next_round()
+        self.timeout_callback(result, substr)
+
     def submit_word(self, user_word):
         if not self.started:
             return
@@ -123,21 +143,12 @@ class SubstrGame:
 
         return result, self.__next_round()
 
-    def __next_round(self):
-        if self.lives <= 0:
-            self.end()
-            return "Game Over"
-        else:
-            self.__choose_substr()
-            return self.substr
-
-
-    def start(self):
+    def start(self, timeout_callback):
         self.__reset()
-
         self.started = True
-        self.__choose_substr()
+        self.timeout_callback = timeout_callback
 
+        self.__next_round()
         return self.substr
 
     def end(self):
