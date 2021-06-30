@@ -23,9 +23,7 @@ class LarmackBot(commands.Bot):
             await message.channel.send("PogChamp!!")
 
         if 210819098274299904 in message.raw_mentions:
-            larmad = next((emoji for emoji in message.guild.emojis if "larmad" in emoji.name or emoji.name == "log"), None)
-            emoji = str(larmad) or "\N{smiling face with sunglasses}"
-            await message.add_reaction(emoji)
+            await message.add_reaction("<:larmad:859893602917810217>")
 
         await self.process_commands(message)
 
