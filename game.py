@@ -70,7 +70,7 @@ class SubstrGame:
         base = 100  # default for valid word
         base += 10 * len(word)  # bonus for making longer words
         if word[:2] != self.substr and word[:3] != self.substr:
-            base += 50  # bonus for not starting word with substring
+            base += 20  # bonus for not starting word with substring
         bonus_mult = self.substr_level / 4.0  # substr difficulty multiplier
         bonus_mult += (self.substr_length - 2) / 2.0  # substr length multiplier
         total = base * (bonus_mult + 1)
