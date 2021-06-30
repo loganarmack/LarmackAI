@@ -55,3 +55,6 @@ class GameCommands(commands.Cog):
     async def __timeout(self, user_id, result, substr):
         channel = self.bot.get_channel(self.game_list[user_id].channel_id)
         await channel.send(self.__game_update_message(user_id, result, substr))
+        
+        if self.game_list[user_id].game.game_over():
+            self.game_list.pop(user_id)
