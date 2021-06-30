@@ -133,5 +133,4 @@ dmypy.json
 
 # dev files 
 *.csv
-levels.json
 TODO

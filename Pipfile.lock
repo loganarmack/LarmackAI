@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "42b8bf0f257070f7a7ac4667a97f82038edfa0c45f8040688a8273e97570aa1e"
+            "sha256": "66300b16bcac10425e4dd7b163854f58013544dd2a6da6726001da63ee808831"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -151,16 +151,6 @@
             ],
             "markers": "python_version >= '3.6'",
             "version": "==5.1.0"
-        },
-        "pyenchant": {
-            "hashes": [
-                "sha256:37c79e1dab492092fe8135222b2ba404c1b79595b459af9edaeddb77a2cb89a5",
-                "sha256:49e0b255bef9356f57eeeee1d983ffa8599c0a46727d55cddbc71ec26226ca80",
-                "sha256:5e206a1d6596904a922496f6c9f7d0b964b243905f401f5f2f40ea4d1f74e2cf",
-                "sha256:e8546c28b630f6d9f76642166656e337df2a1849cbef2b8ee198e7f64266f4ee"
-            ],
-            "index": "pypi",
-            "version": "==3.2.1"
         },
         "python-dotenv": {
             "hashes": [
