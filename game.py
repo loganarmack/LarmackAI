@@ -121,7 +121,7 @@ class SubstrGame:
             result = f"Nice job! You earned {word_value} points."
 
             if used_all_letters:
-                result += "You've gained a life from using each letter at least once!\n"
+                result += "\nYou've gained a life from using each letter at least once!"
                 delta_lives = 1
         
         else:
