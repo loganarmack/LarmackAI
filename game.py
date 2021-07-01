@@ -63,11 +63,20 @@ class SubstrGame:
 
     def _score_word(self, word):
         base = 100  # default for valid word
-        base += 10 * len(word)  # bonus for making longer words
+
+        # bonus for making longer words p(l) = (l-5)^2 + 10l
+        base += 10 * len(word) + (len(word) - 5) ** 2
+
+        # bonus for not starting word with substring
         if word[:self._substr_length] != self._substr:
-            base += 20  # bonus for not starting word with substring
-        bonus_mult = self._substr_level / 4.0  # substr difficulty multiplier
-        bonus_mult += (self._substr_length - 2) / 2.0  # substr length multiplier
+            base += 25  
+
+        # substr difficulty multiplier
+        bonus_mult = self._substr_level / 4.0  
+
+        # substr length multiplier (might not be worth keeping)
+        bonus_mult += (self._substr_length - 2) / 2.0  
+
         total = base * (bonus_mult + 1)
         self._points += total
         return total
@@ -80,7 +89,9 @@ class SubstrGame:
 
         self._length_weights[3] += floor(self._length_weights[2] / 10.0)
         self._length_weights[2] = floor(self._length_weights[2] * 9 / 10.0)
+
         #self.guess_time = max(constant.MIN_TIME_SECONDS, self.guess_time * 9 / 10.0)
+        #minimum word length scaling?
 
     def _update_used_letters(self, user_word):
         for letter in user_word.lower():
