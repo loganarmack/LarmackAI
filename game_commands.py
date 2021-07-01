@@ -41,11 +41,11 @@ class GameCommands(commands.Cog):
         #previous round result
         if data.get('result'):
             message += f"{data['result']}\n"
-        message += f"Remaining letters: {data['remaining_letters']}\n"
+        message += f"Letters to bonus: {data['remaining_letters']}\n"
 
         #lives
         if data.get('delta_lives'):
-            message += f"Lies: {data['lives'] - data['delta_lives']} -> {data['lives']}\n"
+            message += f"Lives: {data['lives'] - data['delta_lives']} -> {data['lives']}\n"
         else:
             message += f"Lives: {data['lives']}\n"
 
