@@ -1,5 +1,6 @@
 from discord.ext import commands
 from game_manager import GameManager
+import constant
 
 class GameCommands(commands.Cog):
     def __init__(self, bot):
@@ -13,8 +14,7 @@ class GameCommands(commands.Cog):
             await ctx.send("You already have a game running!")
         else:
             self.game_list[user_id] = GameManager(user_id, ctx.channel.id)
-            substr = self.game_list[user_id].game.start(lambda r, s: self.__timeout(user_id, r, s))
-            await ctx.send(self.__game_update_message(user_id, '', substr))
+            await self.game_list[user_id].game.start(lambda data: self._on_round_end(user_id, data))
 
     @commands.command()
     async def stop(self, ctx):
@@ -22,7 +22,7 @@ class GameCommands(commands.Cog):
         if user_id not in self.game_list:
             await ctx.send("No game is currently running!")
         else:
-            self.game_list[user_id].stop()
+            self.game_list[user_id].game.stop()
             self.game_list.pop(user_id)
             await ctx.send("Game stopped.")
 
@@ -33,32 +33,36 @@ class GameCommands(commands.Cog):
 
         user_id = message.author.id
         if user_id in self.game_list and message.channel.id == self.game_list[user_id].channel_id:
-            result, substr = self.game_list[user_id].game.submit_word(message.content.lower())
-            await message.channel.send(content=self.__game_update_message(user_id, result, substr))
+            await self.game_list[user_id].game.submit_word(message.content.lower())
 
-            if self.game_list[user_id].game.game_over():
-                self.game_list[user_id].stop()
-                self.game_list.pop(user_id)
-
-    def __game_update_message(self, user_id, result, substr):
+    def _game_update_message(self, user_id, data):
         message = "```ml\n"
-        if result:
-            message += f"{result}\n"
-        message += f"Remaining letters: {self.game_list[user_id].game.get_remaining_letters()}\n"
-        message += f"Lives: {self.game_list[user_id].game.lives}\n"
-        message += f"Score: {self.game_list[user_id].game.points}\n"
 
-        if not self.game_list[user_id].game.game_over():
-            message += f"Enter a word containing '{substr}' (time: {self.game_list[user_id].game.guess_time}s)\n"
+        #previous round result
+        if data.get('result'):
+            message += f"{data['result']}\n"
+        message += f"Remaining letters: {data['remaining_letters']}\n"
+
+        #lives
+        if data.get('delta_lives'):
+            message += f"Lies: {data['lives'] - data['delta_lives']} -> {data['lives']}\n"
+        else:
+            message += f"Lives: {data['lives']}\n"
+
+        #score
+        message += f"Score: {data['points']}\n"
+
+        #substr/game over
+        if data['substr'] != constant.GAME_OVER:
+            message += f"Enter a word containing '{data['substr']}' (time: {data['guess_time']}s)\n"
         else:
             message += "GAME OVER\n"
 
         return message + "```"
 
-    async def __timeout(self, user_id, result, substr):
+    async def _on_round_end(self, user_id, data):
         channel = self.bot.get_channel(self.game_list[user_id].channel_id)
-        await channel.send(self.__game_update_message(user_id, result, substr))
+        await channel.send(self._game_update_message(user_id, data))
         
-        if self.game_list[user_id].game.game_over():
-            self.game_list[user_id].stop()
+        if data['substr'] == constant.GAME_OVER:
             self.game_list.pop(user_id)
