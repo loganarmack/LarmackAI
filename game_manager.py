@@ -16,11 +16,11 @@ class GameManager:
             or str(user_id) in self.other_user_ids
 
     async def start(self, on_round_end):
-        self.prompt_time = datetime.now().second
+        self.prompt_time = datetime.now().timestamp()
         await self.game.start(on_round_end)
 
     async def submit_word(self, word):
-        curr_time = datetime.now().second
+        curr_time = datetime.now().timestamp()
         if curr_time - self.prompt_time > constant.GUESS_DELAY:
             self.prompt_time = curr_time
             await self.game.submit_word(word)
