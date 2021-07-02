@@ -50,7 +50,7 @@ class GameCommands(commands.Cog):
         if (channel_id in self.game_list
             and self.game_list[channel_id].includes_user(user_id)
         ):
-            await self.game_list[channel_id].game.submit_word(message.content.lower())
+            await self.game_list[channel_id].submit_word(message.content.lower())
 
     def _game_update_message(self, data):
         message = "```ml\n"
