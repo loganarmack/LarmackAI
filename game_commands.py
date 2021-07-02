@@ -25,7 +25,7 @@ class GameCommands(commands.Cog):
 
             self.game_list[channel_id] = GameManager(user_id, channel_id, extra_users, open_game)
             print(f"Starting game in channel {channel_id} by host {user_id} with extra users {extra_users}")
-            await self.game_list[channel_id].game.start(lambda data: self._on_round_end(channel_id, data))
+            await self.game_list[channel_id].start(lambda data: self._on_round_end(channel_id, data))
 
     @commands.command()
     async def stop(self, ctx):
