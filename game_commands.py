@@ -41,19 +41,22 @@ class GameCommands(commands.Cog):
             self.game_list.pop(channel_id)
             await ctx.send("Game stopped.")
 
-    @commands.command()
+    @commands.command() #TODO: http://dreamlo.com/lb/vtbGDimszEqVQtUNKWmojgR-stxw8_1020Kryey3UTnw
     async def leaderboards(self, ctx):
-        guild_id = str(ctx.guild.id)
-        with open("leaderboards.json", "r") as f:
-            leaderboards = json.load(f)
-            
-            message = f"The current leaderboards for {ctx.guild.name}:\n"
-            for i, user_id in enumerate(leaderboards[guild_id]):
-                user = self.bot.get_user(int(user_id))
-                username = user.name + '#' + user.discriminator if user else "Unknown"
-                message += f"{i + 1}: {username} with {leaderboards[guild_id][user_id]} points\n"
+        try:
+            guild_id = str(ctx.guild.id)
+            with open("leaderboards.json", "r") as f:
+                leaderboards = json.load(f)
+                
+                message = f"The current leaderboards for {ctx.guild.name}:\n"
+                for i, user_id in enumerate(leaderboards[guild_id]):
+                    user = self.bot.get_user(int(user_id))
+                    username = user.name + '#' + user.discriminator if user else "Unknown"
+                    message += f"{i + 1}: {username} with {leaderboards[guild_id][user_id]} points\n"
 
-            await ctx.send(message)
+                await ctx.send(message)
+        except FileNotFoundError:
+            await ctx.send("There are currently no scores recorded for this server.")
 
     @commands.Cog.listener()
     async def on_message(self, message):
