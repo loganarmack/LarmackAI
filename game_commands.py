@@ -2,6 +2,7 @@ from discord.ext import commands
 from game_manager import GameManager
 import constant
 import re
+import json
 
 class GameCommands(commands.Cog):
     def __init__(self, bot):
@@ -39,6 +40,20 @@ class GameCommands(commands.Cog):
             self.game_list[channel_id].game.stop()
             self.game_list.pop(channel_id)
             await ctx.send("Game stopped.")
+
+    @commands.command()
+    async def leaderboards(self, ctx):
+        guild_id = str(ctx.guild.id)
+        with open("leaderboards.json", "r") as f:
+            leaderboards = json.load(f)
+            
+            message = f"The current leaderboards for {ctx.guild.name}:\n"
+            for i, user_id in enumerate(leaderboards[guild_id]):
+                user = self.bot.get_user(int(user_id))
+                username = user.name + '#' + user.discriminator if user else "Unknown"
+                message += f"{i + 1}: {username} with {leaderboards[guild_id][user_id]} points\n"
+
+            await ctx.send(message)
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -82,4 +97,39 @@ class GameCommands(commands.Cog):
         await channel.send(self._game_update_message(data))
         
         if data['substr'] == constant.GAME_OVER:
+
+            try:
+                f = open("leaderboards.json", "r+")
+
+                leaderboards = json.load(f)
+                guild_id = str(channel.guild.id)
+                user_id = str(self.game_list[channel_id].host_id)
+
+                changed = False
+                if not leaderboards[guild_id]:
+                    leaderboards[guild_id] = {user_id: data['points']}
+                    changed = True
+
+                elif user_id not in leaderboards[guild_id] or leaderboards[guild_id][user_id] < data['points']:
+                    leaderboards[guild_id][user_id] = data['points']
+                    changed = True
+
+                if changed:
+                    leaderboards[guild_id] = {
+                        k: v for k, v in sorted(leaderboards[guild_id].items(), key=lambda item: item[1])
+                    }
+                    f.seek(0)
+                    f.write(json.dumps(leaderboards))
+                    f.truncate()
+
+                f.close()
+            
+            except FileNotFoundError:
+                guild_id = channel.guild.id
+                user_id = self.game_list[channel_id].host_id
+                leaderboards = {guild_id: { user_id: data['points']}}
+
+                with open("leaderboards.json", "w") as f:
+                    f.write(json.dumps(leaderboards))
+
             self.game_list.pop(channel_id)

@@ -134,3 +134,4 @@ dmypy.json
 # dev files 
 *.csv
 TODO
+leaderboards.json

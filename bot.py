@@ -6,8 +6,8 @@ from discord.ext import commands
 from game_commands import GameCommands
 
 class LarmackBot(commands.Bot):
-    def __init__(self, command_prefix):
-        super().__init__(command_prefix, case_insensitive=True)
+    def __init__(self, command_prefix, intents):
+        super().__init__(command_prefix, case_insensitive=True, intents=intents)
     
         self.add_cog(GameCommands(self))
         SubstrGame.load()
@@ -30,5 +30,8 @@ class LarmackBot(commands.Bot):
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 
-bot = LarmackBot("!")
+intents = discord.Intents.default()
+intents.members = True
+
+bot = LarmackBot("!", intents)
 bot.run(TOKEN)
