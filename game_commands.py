@@ -119,7 +119,7 @@ class GameCommands(commands.Cog):
 
                 if changed:
                     leaderboards[guild_id] = {
-                        k: v for k, v in sorted(leaderboards[guild_id].items(), key=lambda item: item[1])
+                        k: v for k, v in sorted(leaderboards[guild_id].items(), reversed=True, key=lambda item: item[1])
                     }
                     f.seek(0)
                     f.write(json.dumps(leaderboards))
