@@ -1,5 +1,5 @@
 from game import SubstrGame
-from datetime import date, datetime
+from datetime import datetime
 import constant
 
 class GameManager:

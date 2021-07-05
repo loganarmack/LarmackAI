@@ -2,12 +2,28 @@ from discord.ext import commands
 from game_manager import GameManager
 import constant
 import re
-import json
+import psycopg2
+from config import config
+
 
 class GameCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.game_list = {}
+
+        #setup db for highscores
+        params = config()
+        self.conn = psycopg2.connect(**params)
+        self.cur = self.conn.cursor()
+
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS leaderboards (
+                guild_id BIGINT NOT NULL,
+                user_id BIGINT NOT NULL,
+                score REAL NOT NULL,
+                PRIMARY KEY (guild_id, user_id)
+            );""")
+
 
     @commands.command()
     async def start(self, ctx, *args):
@@ -39,24 +55,33 @@ class GameCommands(commands.Cog):
         else:
             self.game_list[channel_id].game.stop()
             self.game_list.pop(channel_id)
+            print(f"Stopped game in channel {channel_id} by host {user_id}")
             await ctx.send("Game stopped.")
 
-    @commands.command() #TODO: http://dreamlo.com/lb/vtbGDimszEqVQtUNKWmojgR-stxw8_1020Kryey3UTnw
-    async def leaderboards(self, ctx):
-        try:
-            guild_id = str(ctx.guild.id)
-            with open("leaderboards.json", "r") as f:
-                leaderboards = json.load(f)
-                
-                message = f"The current leaderboards for {ctx.guild.name}:\n"
-                for i, user_id in enumerate(leaderboards[guild_id]):
-                    user = self.bot.get_user(int(user_id))
-                    username = user.name + '#' + user.discriminator if user else "Unknown"
-                    message += f"{i + 1}: {username} with {leaderboards[guild_id][user_id]} points\n"
+    @commands.command(name='leaderboard', aliases=['leaderboards', 'highscores']) #TODO: http://dreamlo.com/lb/vtbGDimszEqVQtUNKWmojgR-stxw8_1020Kryey3UTnw
+    async def leaderboard(self, ctx):
+        guild_id = ctx.guild.id
 
-                await ctx.send(message)
-        except FileNotFoundError:
-            await ctx.send("There are currently no scores recorded for this server.")
+        try:
+            self.cur.execute(f"SELECT user_id, score FROM leaderboards WHERE guild_id = {guild_id} ORDER BY score DESC")
+            leaderboard = self.cur.fetchall()
+
+            message = ""
+            if not leaderboard:
+                message = f"There are currently no scores stored for {ctx.guild.name}."
+            
+            else:
+                message = f"The current leaderboards for {ctx.guild.name}:\n"
+                for i, row in enumerate(leaderboard):
+                    user = self.bot.get_user(row[0])
+                    username = user.name + '#' + user.discriminator if user else "Unknown"
+                    message += f"{i + 1}: {username} with {row[1]} points\n"
+
+            await ctx.send(message)
+
+        except Exception as e:
+            print(e)
+            await ctx.send("There was an error retrieving the leaderboard.")
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -100,39 +125,25 @@ class GameCommands(commands.Cog):
         await channel.send(self._game_update_message(data))
         
         if data['substr'] == constant.GAME_OVER:
-
-            try:
-                f = open("leaderboards.json", "r+")
-
-                leaderboards = json.load(f)
-                guild_id = str(channel.guild.id)
-                user_id = str(self.game_list[channel_id].host_id)
-
-                changed = False
-                if not leaderboards[guild_id]:
-                    leaderboards[guild_id] = {user_id: data['points']}
-                    changed = True
-
-                elif user_id not in leaderboards[guild_id] or leaderboards[guild_id][user_id] < data['points']:
-                    leaderboards[guild_id][user_id] = data['points']
-                    changed = True
-
-                if changed:
-                    leaderboards[guild_id] = {
-                        k: v for k, v in sorted(leaderboards[guild_id].items(), reversed=True, key=lambda item: item[1])
-                    }
-                    f.seek(0)
-                    f.write(json.dumps(leaderboards))
-                    f.truncate()
-
-                f.close()
-            
-            except FileNotFoundError:
-                guild_id = channel.guild.id
-                user_id = self.game_list[channel_id].host_id
-                leaderboards = {guild_id: { user_id: data['points']}}
-
-                with open("leaderboards.json", "w") as f:
-                    f.write(json.dumps(leaderboards))
+            guild_id = channel.guild.id
+            user_id = self.game_list[channel_id].host_id
 
             self.game_list.pop(channel_id)
+
+            try:
+                #Insert score if it doesn't exist
+                self.cur.execute(f"""
+                    INSERT INTO leaderboards (guild_id, user_id, score) 
+                    VALUES ({guild_id}, {user_id}, {data['points']})
+                    ON CONFLICT (guild_id, user_id)
+                    DO UPDATE SET score = GREATEST(EXCLUDED.score, {data['points']});""")
+
+                self.conn.commit()
+
+            except Exception as e:
+                print(f"Error updating score for user {user_id}: {e}")
+
+
+            
+
+    
