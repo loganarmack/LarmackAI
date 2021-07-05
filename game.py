@@ -36,14 +36,11 @@ class SubstrGame:
         self._substr = choice(list(SubstrGame.levels[str(self._substr_length)][self._substr_level].keys()))
         self._possible_word = choice(SubstrGame.levels[str(self._substr_length)][self._substr_level][self._substr])
 
-    def _check_word(self, user_word, timeout): 
+    def _check_word(self, user_word): 
         correct = True
         reason = None
-        if timeout:
-            correct = False
-            reason = "You're out of time!"
 
-        elif not user_word:
+        if not user_word:
             correct = False
             reason = "You didn't enter a word!"
 
@@ -106,13 +103,13 @@ class SubstrGame:
         return False
 
     async def _round_end(self, user_word, timeout):
+        delta_lives = 0
+        result = ''
+
+        #round ended from correct word
         if not timeout:
             self._timer.cancel()
 
-        result = ''
-        delta_lives = 0
-        correct, reason = self._check_word(user_word, timeout)
-        if correct:
             word_value = self._score_word(user_word)
             self._increment_weights()
             self._used_words.add(user_word)
@@ -123,10 +120,11 @@ class SubstrGame:
             if used_all_letters:
                 result += "\nYou've gained a life from using each letter at least once!"
                 delta_lives = 1
-        
+
+        #round ended from timeout
         else:
             self._lives -= 1
-            result = reason + f"\nA possible word for this was {self._possible_word}"
+            result = f"You're out of time!\nA possible word for this was {self._possible_word}"
             delta_lives = -1
 
         if self._lives <= 0:
@@ -155,11 +153,16 @@ class SubstrGame:
         await self._round_end(None, True)
 
     async def submit_word(self, user_word):
-        await self._round_end(user_word, False)
+        correct, reason = self._check_word(user_word)
+        if correct:
+            await self._round_end(user_word, False)
+        else:
+            await self._wrong_answer_callback(reason)
 
-    async def start(self, round_end_callback):
+    async def start(self, round_end_callback, wrong_answer_callback):
         self._reset()
         self._round_end_callback = round_end_callback
+        self._wrong_answer_callback = wrong_answer_callback
         self._choose_substr()
 
         data = {

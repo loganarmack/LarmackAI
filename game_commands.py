@@ -42,7 +42,10 @@ class GameCommands(commands.Cog):
 
             self.game_list[channel_id] = GameManager(user_id, channel_id, extra_users, open_game)
             print(f"Starting game in channel {channel_id} by host {user_id} with extra users {extra_users}")
-            await self.game_list[channel_id].start(lambda data: self._on_round_end(channel_id, data))
+            await self.game_list[channel_id].start(
+                lambda data: self._on_round_end(channel_id, data),
+                lambda reason: self._on_wrong_answer(channel_id, reason)
+            )
 
     @commands.command()
     async def stop(self, ctx):
@@ -143,6 +146,9 @@ class GameCommands(commands.Cog):
             except Exception as e:
                 print(f"Error updating score for user {user_id}: {e}")
 
+    async def _on_wrong_answer(self, channel_id, reason):
+        channel = self.bot.get_channel(channel_id)
+        await channel.send(reason)
 
             
 

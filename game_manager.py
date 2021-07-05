@@ -15,17 +15,8 @@ class GameManager:
             or user_id == self.host_id \
             or str(user_id) in self.other_user_ids
 
-    async def start(self, on_round_end):
-        self.prompt_time = datetime.now().timestamp()
-        await self.game.start(on_round_end)
+    async def start(self, on_round_end, on_wrong_answer):
+        await self.game.start(on_round_end, on_wrong_answer)
 
     async def submit_word(self, word):
-        curr_time = datetime.now().timestamp()
-        if curr_time - self.prompt_time > constant.GUESS_DELAY:
-            self.prompt_time = curr_time
-            await self.game.submit_word(word)
-
-        else:
-            print("Guessed too fast!")
-            print(f"curr_time = {curr_time}")
-            print(f"prompt_time = {self.prompt_time}")
+        await self.game.submit_word(word)
