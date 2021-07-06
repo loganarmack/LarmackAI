@@ -17,18 +17,13 @@ class SubstrGame:
 
     def _reset(self):
         self._points = 0
-        self._lives = 3
+        self._lives = constant.STARTING_LIVES
         self._used_words = set()
         self._used_letters = set()
-        self._level_weights = {0: 1000, 1: 0, 2: 0, 3: 0, 4: 0}
+        self._level_weights = {l: 1000 if l == 0 else 0 for l in range(constant.LEVELS)}
         self._length_weights = {2: 100, 3: 0}
-        self._substr = "ng"
-        self._possible_word = "ping"
-        self._substr_level = 0
-        self._substr_length = 2
         self._guess_time = constant.GUESS_TIME
         self._timer = None
-        self._timeout_callback = None
 
     def _choose_substr(self):
         self._substr_level = SubstrGame.weighted_random(self._level_weights)

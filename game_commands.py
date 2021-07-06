@@ -25,18 +25,24 @@ class GameCommands(commands.Cog):
             );""")
 
 
-    @commands.command()
-    async def start(self, ctx, *args):
+    @commands.command(
+        help="Starts a word game in the current channel. "
+            +"You can metion specific users after the command to add "
+            +"them to your game, or allow anyone to pitch in using the keyword 'any'.",
+        brief="Starts a word game in the current channel."
+
+    )
+    async def start(self, ctx, *other_users):
         user_id = ctx.message.author.id
         channel_id = ctx.channel.id
         if channel_id in self.game_list:
             await ctx.send("There's already a game running in this channel!")
 
         else:
-            open_game = args and args[0].lower() in ["any", "open", "all"]
+            open_game = other_users and other_users[0].lower() in ["any", "open", "all"]
             extra_users = []
-            for arg in args:
-                search_id = re.search('^<@!(.*)>$', arg)
+            for user in other_users:
+                search_id = re.search('^<@!(.*)>$', user)
                 if search_id:
                     extra_users.append(search_id.group(1))
 
@@ -47,7 +53,11 @@ class GameCommands(commands.Cog):
                 lambda reason: self._on_wrong_answer(channel_id, reason)
             )
 
-    @commands.command()
+    @commands.command(
+        help="Stops the word game in the current channel. "
+            +"You must have been the one to start the lobby to be able to stop it.",
+        brief="Stops the word game in the current channel."
+    )
     async def stop(self, ctx):
         user_id = ctx.message.author.id
         channel_id = ctx.channel.id
@@ -61,7 +71,12 @@ class GameCommands(commands.Cog):
             print(f"Stopped game in channel {channel_id} by host {user_id}")
             await ctx.send("Game stopped.")
 
-    @commands.command(name='leaderboard', aliases=['leaderboards', 'highscores']) #TODO: http://dreamlo.com/lb/vtbGDimszEqVQtUNKWmojgR-stxw8_1020Kryey3UTnw
+    @commands.command(
+        name='leaderboard',
+        aliases=['leaderboards', 'highscores'],
+        help="Displays the word game high scores for the current server.",
+        brief="Displays the word game high scores for the current server."
+    )
     async def leaderboard(self, ctx):
         guild_id = ctx.guild.id
 
@@ -85,6 +100,21 @@ class GameCommands(commands.Cog):
         except Exception as e:
             print(e)
             await ctx.send("There was an error retrieving the leaderboard.")
+
+    @commands.command(
+        name='rules',
+        aliases=['howtoplay'],
+        help="A quick breakdown of the rules of the game.",
+        brief="A quick breakdown of the rules of the game.",
+    )
+    async def rules(self, ctx):
+        try:
+            with open('game_rules.txt', 'r') as f:
+                replacements = {'starting_lives': constant.STARTING_LIVES, 'guess_time': constant.GUESS_TIME}
+                message = f.read().replace('\n', '').replace('\\', '\n').format(**replacements)
+                await ctx.send(message)
+        except FileNotFoundError:
+            print("Error: could not find rules file.")
 
     @commands.Cog.listener()
     async def on_message(self, message):

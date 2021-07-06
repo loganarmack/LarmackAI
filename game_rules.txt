@@ -1,0 +1,15 @@
+**Substring Game Rules** \
+Each round, you will be given a group of letters. You will have {guess_time} seconds 
+to enter a real English word containing this group somewhere in the word. If you can't think 
+of something in time, you will lose a life.
+\\
+If you enter a correct word in time, you'll gain points based on the difficulty of the letter group and 
+the length of your word, with a small bonus for using the substring in the middle rather than at the start. 
+Additionally, you'll gain a bonus life each time you use all the letters in the alphabet once, so try to 
+come up with words that use the remaining "letters to bonus". 
+\\
+Keep in mind that you can only use each word once, so be creative. 
+\\
+You start with {starting_lives} lives, and the game ends once your lives reach 0. Good luck! 
+\\
+(Start a game now with !start || View this server's top scores with !leaderboard) 
