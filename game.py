@@ -26,7 +26,7 @@ class SubstrGame:
         self._possible_word = "ping"
         self._substr_level = 0
         self._substr_length = 2
-        self._guess_time = 15
+        self._guess_time = constant.GUESS_TIME
         self._timer = None
         self._timeout_callback = None
 

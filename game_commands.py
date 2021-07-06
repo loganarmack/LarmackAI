@@ -139,7 +139,7 @@ class GameCommands(commands.Cog):
                     INSERT INTO leaderboards (guild_id, user_id, score) 
                     VALUES ({guild_id}, {user_id}, {data['points']})
                     ON CONFLICT (guild_id, user_id)
-                    DO UPDATE SET score = GREATEST(EXCLUDED.score, {data['points']});""")
+                    DO UPDATE SET score = GREATEST(EXCLUDED.score, leaderboards.score);""")
 
                 self.conn.commit()
 
