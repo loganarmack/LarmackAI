@@ -33,7 +33,7 @@ class GameCommands(commands.Cog):
             await ctx.send("There's already a game running in this channel!")
 
         else:
-            open_game = args and args[0].lower() == "any"
+            open_game = args and args[0].lower() in ["any", "open", "all"]
             extra_users = []
             for arg in args:
                 search_id = re.search('^<@!(.*)>$', arg)
