@@ -1,6 +1,4 @@
 from game import SubstrGame
-from datetime import datetime
-import constant
 
 class GameManager:
     def __init__(self, user_id, channel_id, other_user_ids, open_game):
