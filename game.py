@@ -127,15 +127,8 @@ class SubstrGame:
         else:
             self._choose_substr()
 
-        data = {
-            'result': result,
-            'lives': self._lives, 
-            'points': self._points, 
-            'remaining_letters': self._get_remaining_letters(), 
-            'substr': self._substr, 
-            'guess_time': self._guess_time
-        }
-
+        data = self._make_data()
+        data['result'] = result
         if delta_lives != 0:
             data['delta_lives'] = delta_lives
 
@@ -148,11 +141,21 @@ class SubstrGame:
         await self._round_end(None, True)
 
     async def submit_word(self, user_word):
-        correct, reason = self._check_word(user_word)
-        if correct:
-            await self._round_end(user_word, False)
-        else:
-            await self._wrong_answer_callback(reason)
+        if self._substr != constant.GAME_OVER:
+            correct, reason = self._check_word(user_word)
+            if correct:
+                await self._round_end(user_word, False)
+            else:
+                await self._wrong_answer_callback(reason)
+
+    def _make_data(self):
+        return {
+            'lives': self._lives, 
+            'points': self._points, 
+            'remaining_letters': self._get_remaining_letters(), 
+            'substr': self._substr, 
+            'guess_time': self._guess_time
+        }
 
     async def start(self, round_end_callback, wrong_answer_callback):
         self._reset()
@@ -160,13 +163,7 @@ class SubstrGame:
         self._wrong_answer_callback = wrong_answer_callback
         self._choose_substr()
 
-        data = {
-            'lives': self._lives, 
-            'points': self._points, 
-            'remaining_letters': self._get_remaining_letters(), 
-            'substr': self._substr, 
-            'guess_time': self._guess_time
-        }
+        data = self._make_data()
         await round_end_callback(data)
 
         self._timer = Timer(self._guess_time, self._on_timeout)
