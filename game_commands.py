@@ -3,7 +3,8 @@ from game_manager import GameManager
 import constant
 import re
 import psycopg2
-from config import config
+import os
+from dotenv import load_dotenv
 
 
 class GameCommands(commands.Cog):
@@ -12,8 +13,9 @@ class GameCommands(commands.Cog):
         self.game_list = {}
 
         #setup db for highscores
-        params = config()
-        self.conn = psycopg2.connect(**params)
+        load_dotenv()
+        DATABASE_URL = os.getenv('DATABASE_URL')
+        self.conn = psycopg2.connect(DATABASE_URL)
         self.cur = self.conn.cursor()
 
         self.cur.execute("""
@@ -39,7 +41,7 @@ class GameCommands(commands.Cog):
     @commands.command(
         help="Starts a versus word game in the current channel. "
             +"Mention any users who you'd like to include in the game.",
-        brief="Starts a versus word game in the current channel against all users mentioned.",
+        brief="Starts a versus word game in the current channel.",
         name="start-vs"
     )
     async def start_versus(self, ctx, *other_users):
