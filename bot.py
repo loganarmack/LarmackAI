@@ -22,7 +22,7 @@ class LarmackBot(commands.Bot):
         
         msg = message.content.lower()
 
-        if re.search('(^|\s)pog(gers)?(champ)?(gies)?(\s|$)', msg):
+        if re.search('(^|\s)pog+(gers)?(champ)?(gies)?(\s|$)', msg):
             await message.channel.send("PogChamp!!")
 
         if 210819098274299904 in message.raw_mentions:
