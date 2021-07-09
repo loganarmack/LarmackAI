@@ -1,5 +1,6 @@
 import os
 import discord
+import re
 from game import SubstrGame
 from dotenv import load_dotenv
 from discord.ext import commands
@@ -19,7 +20,9 @@ class LarmackBot(commands.Bot):
         if message.author == self.user:
             return
         
-        if 'pog' in message.content.lower():
+        msg = message.content.lower()
+
+        if re.search('(^|\s)pog(gers)?(champ)?(gies)?(\s|$)', msg):
             await message.channel.send("PogChamp!!")
 
         if 210819098274299904 in message.raw_mentions:

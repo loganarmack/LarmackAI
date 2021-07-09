@@ -194,8 +194,12 @@ class GameCommands(commands.Cog):
         elif data.get('substr') == constant.GAME_OVER:
             guild_id = channel.guild.id
             user_id = self.game_list[channel_id].host_id
+            solo = len(self.game_list[channel_id].user_list) == 1
 
             self.game_list.pop(channel_id)
+
+            if not solo: #only store single player high scores
+                return
 
             try:
                 #Insert score if it doesn't exist
