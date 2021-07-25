@@ -1,6 +1,6 @@
 from discord.ext import commands
 from game_manager import GameManager
-import constant
+import game_constant as gc
 import re
 import psycopg2
 import os
@@ -128,9 +128,10 @@ class GameCommands(commands.Cog):
     async def rules(self, ctx):
         try:
             with open('game_rules.txt', 'r') as f:
-                replacements = {'starting_lives': constant.STARTING_LIVES, 'guess_time': constant.GUESS_TIME}
+                replacements = {'starting_lives': gc.STARTING_LIVES, 'guess_time': gc.GUESS_TIME}
                 message = f.read().replace('\n', '').replace('\\', '\n').format(**replacements)
                 await ctx.send(message)
+
         except FileNotFoundError:
             print("Error: could not find rules file.")
 
@@ -165,7 +166,7 @@ class GameCommands(commands.Cog):
             message += f"Score: {data['points']}\n"
 
         #substring
-        if data.get('substr') and data['substr'] != constant.GAME_OVER:
+        if data.get('substr') and data['substr'] != gc.GAME_OVER:
             message += f"Enter a word containing '{data['substr']}' (time: {data['guess_time']}s)\n"
         elif data.get('substr'):
             message += "GAME OVER\n"
@@ -191,7 +192,7 @@ class GameCommands(commands.Cog):
         if data.get('winner'):
             self.game_list.pop(channel_id)
 
-        elif data.get('substr') == constant.GAME_OVER:
+        elif data.get('substr') == gc.GAME_OVER:
             guild_id = channel.guild.id
             user_id = self.game_list[channel_id].host_id
             solo = len(self.game_list[channel_id].user_list) == 1

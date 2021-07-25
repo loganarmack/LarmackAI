@@ -1,6 +1,7 @@
 import os
 import discord
 import re
+import constant
 from game import SubstrGame
 from dotenv import load_dotenv
 from discord.ext import commands
@@ -22,10 +23,11 @@ class LarmackBot(commands.Bot):
         
         msg = message.content.lower()
 
-        if re.search('(^|\s)pog+(gers)?(champ)?(gies)?(\s|$)', msg):
+        if re.search('(^|\s)pog+(gers)?(champ)?(gies)?!*(\s|$)', msg):
             await message.channel.send("PogChamp!!")
 
-        if 210819098274299904 in message.raw_mentions:
+        # If I'm mentioned
+        if 210819098274299904 in message.raw_mentions and constant.REACT_MENTION:
             await message.add_reaction("<:larmad:859893602917810217>")
 
         await self.process_commands(message)
