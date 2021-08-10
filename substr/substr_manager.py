@@ -1,7 +1,7 @@
-from game import SubstrGame
-from multi_game import MultiSubstrGame
+from substr.substr_game import SubstrGame
+from substr.multi_game import MultiSubstrGame
 
-class GameManager:
+class SubstrManager:
     def __init__(self, user_id, channel_id, other_user_ids, open_game=False, versus=False):
         self.channel_id = channel_id
         self.user_list = [str(user_id)] + list(other_user_ids)

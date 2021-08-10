@@ -1,9 +1,10 @@
-from word_counter import get_pair_levels, get_triplet_levels, export_levels
+from substr.word_counter import get_pair_levels, get_triplet_levels, export_levels
 from random import randint, choice
-import game_constant as gc
+import substr.constant as const
 import json
 from math import floor
 from timer import Timer
+from os import path
 
 class SubstrGame:
     levels = {}
@@ -17,12 +18,12 @@ class SubstrGame:
 
     def _reset(self):
         self._points = 0
-        self._lives = gc.STARTING_LIVES
+        self._lives = const.STARTING_LIVES
         self._used_words = set()
         self._used_letters = set()
-        self._level_weights = {l: 1000 if l == 0 else 0 for l in range(gc.LEVELS)}
+        self._level_weights = {l: 1000 if l == 0 else 0 for l in range(const.LEVELS)}
         self._length_weights = {2: 100, 3: 0}
-        self._guess_time = gc.GUESS_TIME
+        self._guess_time = const.GUESS_TIME
         self._timer = None
 
     def _choose_substr(self):
@@ -75,14 +76,14 @@ class SubstrGame:
 
     def _increment_weights(self):
         for level in self._level_weights:
-            if level != gc.LEVELS - 1:
+            if level != const.LEVELS - 1:
                 self._level_weights[level + 1] += floor(self._level_weights[level] / 10.0)
                 self._level_weights[level] = floor(self._level_weights[level] * 9 / 10.0)
 
         self._length_weights[3] += floor(self._length_weights[2] / 10.0)
         self._length_weights[2] = floor(self._length_weights[2] * 9 / 10.0)
 
-        #self.guess_time = max(gc.MIN_TIME_SECONDS, self.guess_time * 9 / 10.0)
+        #self.guess_time = max(const.MIN_TIME_SECONDS, self.guess_time * 9 / 10.0)
         #minimum word length scaling?
 
     def _update_used_letters(self, user_word):
@@ -123,7 +124,7 @@ class SubstrGame:
             delta_lives = -1
 
         if self._lives <= 0:
-            self._substr = gc.GAME_OVER
+            self._substr = const.GAME_OVER
         else:
             self._choose_substr()
 
@@ -141,7 +142,7 @@ class SubstrGame:
         await self._round_end(None, True)
 
     async def submit_word(self, user_word):
-        if self._substr != gc.GAME_OVER:
+        if self._substr != const.GAME_OVER:
             correct, reason = self._check_word(user_word)
             if correct:
                 await self._round_end(user_word, False)
@@ -186,12 +187,15 @@ class SubstrGame:
 
     @staticmethod
     def load():
+        file_path = path.abspath(__file__)
+        dir_path = path.dirname(file_path)
+        levels_path = path.join(dir_path, 'levels.json')
         try:
-            f = open("levels.json", "r")
+            f = open(levels_path, "r")
             SubstrGame.levels = json.load(f)
         except FileNotFoundError:
-            export_levels(gc.LEVELS)
+            export_levels(const.LEVELS)
             SubstrGame.levels = {
-                '2': get_pair_levels(gc.LEVELS),
-                '3': get_triplet_levels(gc.LEVELS),
+                '2': get_pair_levels(const.LEVELS),
+                '3': get_triplet_levels(const.LEVELS),
             }

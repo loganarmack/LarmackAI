@@ -1,9 +1,13 @@
 from math import floor
-import constant
+from os import path
+import substr.constant as const
 import json
 
 def load_words():
-    with open('words_alpha.txt', 'r') as word_file:
+    file_path = path.abspath(__file__)
+    dir_path = path.dirname(file_path)
+    word_path = path.join(dir_path, "words_alpha.txt")
+    with open(word_path, 'r') as word_file:
         valid_words = set(word_file.read().split())
     
     return valid_words
@@ -37,8 +41,8 @@ def get_sorted_sets():
                     three_sets[triple][1].append(word.lower())
 
     # Remove all entries less than MIN_WORDS:
-    trimmed_two_set = {k: v for k, v in two_sets.items() if v[0] > constant.MIN_WORDS}
-    trimmed_three_set = {k: v for k, v in three_sets.items() if v[0] > constant.MIN_WORDS}
+    trimmed_two_set = {k: v for k, v in two_sets.items() if v[0] > const.MIN_WORDS}
+    trimmed_three_set = {k: v for k, v in three_sets.items() if v[0] > const.MIN_WORDS}
 
     sorted_two = {
         k: v for k, v in sorted(trimmed_two_set.items(), reverse=True, key=lambda item: item[1][0])
@@ -108,4 +112,4 @@ def get_triplet_levels(num_levels):
     return get_levels(sorted_three, num_levels)
 
 
-#export_levels(constant.LEVELS)
+#export_levels(const.LEVELS)

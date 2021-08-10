@@ -1,1 +1,1 @@
-REACT_MENTION = False
+REACT_ON_MENTION = False

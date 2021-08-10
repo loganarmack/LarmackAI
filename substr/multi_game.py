@@ -1,5 +1,5 @@
-from game import SubstrGame
-import constant
+from substr.substr_game import SubstrGame
+import substr.constant as const
 from timer import Timer
 
 class MultiSubstrGame(SubstrGame):
@@ -11,7 +11,7 @@ class MultiSubstrGame(SubstrGame):
         self._users = [
             {
                 'id': user_id,
-                'lives': constant.STARTING_LIVES,
+                'lives': const.STARTING_LIVES,
                 'used_letters': set()
             } 
             for user_id in users

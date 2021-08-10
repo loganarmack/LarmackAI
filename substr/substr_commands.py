@@ -1,13 +1,13 @@
 from discord.ext import commands
-from game_manager import GameManager
-import game_constant as gc
+from substr.substr_manager import SubstrManager
+import substr.constant as const
 import re
 import psycopg2
 import os
 from dotenv import load_dotenv
 
 
-class GameCommands(commands.Cog):
+class SubstrCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.game_list = {}
@@ -64,7 +64,7 @@ class GameCommands(commands.Cog):
                 await ctx.send("You have to mention at least one other player.")
                 return
 
-            self.game_list[channel_id] = GameManager(user_id, channel_id, extra_users, open_game, versus)
+            self.game_list[channel_id] = SubstrManager(user_id, channel_id, extra_users, open_game, versus)
             print(f"Starting game in channel {channel_id} by host {user_id} with extra users {extra_users} (Versus = {versus})")
             await self.game_list[channel_id].start(
                 lambda data: self._on_round_end(channel_id, data),
@@ -127,8 +127,11 @@ class GameCommands(commands.Cog):
     )
     async def rules(self, ctx):
         try:
-            with open('game_rules.txt', 'r') as f:
-                replacements = {'starting_lives': gc.STARTING_LIVES, 'guess_time': gc.GUESS_TIME}
+            file_path = os.path.abspath(__file__)
+            dir_path = os.path.dirname(file_path)
+            rules_path = os.path.join(dir_path, 'game_rules.txt')
+            with open(rules_path, 'r') as f:
+                replacements = {'starting_lives': const.STARTING_LIVES, 'guess_time': const.GUESS_TIME}
                 message = f.read().replace('\n', '').replace('\\', '\n').format(**replacements)
                 await ctx.send(message)
 
@@ -166,7 +169,7 @@ class GameCommands(commands.Cog):
             message += f"Score: {data['points']}\n"
 
         #substring
-        if data.get('substr') and data['substr'] != gc.GAME_OVER:
+        if data.get('substr') and data['substr'] != const.GAME_OVER:
             message += f"Enter a word containing '{data['substr']}' (time: {data['guess_time']}s)\n"
         elif data.get('substr'):
             message += "GAME OVER\n"
@@ -192,7 +195,7 @@ class GameCommands(commands.Cog):
         if data.get('winner'):
             self.game_list.pop(channel_id)
 
-        elif data.get('substr') == gc.GAME_OVER:
+        elif data.get('substr') == const.GAME_OVER:
             guild_id = channel.guild.id
             user_id = self.game_list[channel_id].host_id
             solo = len(self.game_list[channel_id].user_list) == 1
