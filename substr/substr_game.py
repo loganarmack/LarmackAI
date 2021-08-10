@@ -5,8 +5,9 @@ import json
 from math import floor
 from timer import Timer
 from os import path
+from base_game import BaseGame
 
-class SubstrGame:
+class SubstrGame(BaseGame):
     levels = {}
     letter_set = set([chr(i) for i in range(ord('a'), ord('a') + 26)])
 
@@ -141,7 +142,7 @@ class SubstrGame:
     async def _on_timeout(self):
         await self._round_end(None, True)
 
-    async def submit_word(self, user_word):
+    async def submit(self, user_word):
         if self._substr != const.GAME_OVER:
             correct, reason = self._check_word(user_word)
             if correct:

@@ -5,13 +5,13 @@ import constant
 from substr.substr_game import SubstrGame
 from dotenv import load_dotenv
 from discord.ext import commands
-from substr.substr_commands import SubstrCommands
+from game_commands import GameCommands
 
 class LarmackBot(commands.Bot):
     def __init__(self, command_prefix, intents):
         super().__init__(command_prefix, case_insensitive=True, intents=intents)
     
-        self.add_cog(SubstrCommands(self))
+        self.add_cog(GameCommands(self))
         SubstrGame.load()
         
     async def on_ready(self):

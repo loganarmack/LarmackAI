@@ -3,9 +3,9 @@ from twenty_four.parse_expression import parse_expression, InvalidExpressionExce
 import twenty_four.constant as const
 import re
 from itertools import permutations
+from base_game import BaseGame
 
-
-class TwentyFourGame:
+class TwentyFourGame(BaseGame):
     _starting_deck = []
     _operator_permutations = []
 
@@ -59,7 +59,7 @@ class TwentyFourGame:
 
         return correct, reason, random_answer
 
-    def start(self):
+    def start(self, round_end_callback, wrong_answer_callback):
         self._reset()
         self._choose_cards()
 
@@ -90,6 +90,9 @@ class TwentyFourGame:
                     break
 
         return answers
+
+    def stop(self):
+        pass
         
             
     @staticmethod

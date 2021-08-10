@@ -1,13 +1,14 @@
 from discord.ext import commands
-from substr.substr_manager import SubstrManager
+from game_manager import GameManager
 import substr.constant as const
+from constant import GameType
 import re
 import psycopg2
 import os
 from dotenv import load_dotenv
 
 
-class SubstrCommands(commands.Cog):
+class GameCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.game_list = {}
@@ -28,15 +29,33 @@ class SubstrCommands(commands.Cog):
 
 
     @commands.command(
-        help="Starts a word game in the current channel. "
+        help="Starts a game in the current channel. "
+            +"You must mention the game type (substr or 24) "
             +"You can metion specific users after the command to add "
             +"them to your game, or allow anyone to pitch in using the keyword 'any'.",
-        brief="Starts a word game in the current channel."
-
+        brief="Starts a game in the current channel."
     )
-    async def start(self, ctx, *other_users):
+    async def start(self, ctx, game, *other_users):
         open_game = other_users and other_users[0].lower() in ["any", "open", "all"]
-        await self._start_game(ctx, other_users, open_game=open_game)
+
+        if not game:
+            await ctx.send("You must specify a game type.")
+
+        game_type = None
+        if game.lower() in ["substr", "word"]:
+            game_type = GameType.substr
+        elif game.lower() in ["24", "twenty_four", "24game", "twenty"]:
+            game_type = GameType.twenty_four
+        else:
+            await ctx.send("Invalid game type.")
+            return
+
+        args = { 
+            'game_type': game_type,
+            'open_game': open_game,
+            'other_users': other_users
+        }
+        await self._start_game(ctx, args)
 
     @commands.command(
         help="Starts a versus word game in the current channel. "
@@ -45,31 +64,41 @@ class SubstrCommands(commands.Cog):
         name="start-vs"
     )
     async def start_versus(self, ctx, *other_users):
-        await self._start_game(ctx, other_users, versus=True)
+        args = {
+            'game_type': GameType.substr_vs,
+            'other_users': other_users,
+        }
+        await self._start_game(ctx, args)
 
-    async def _start_game(self, ctx, other_users, open_game=False, versus=False):
+    async def _start_game(self, ctx, data):
         user_id = ctx.message.author.id
         channel_id = ctx.channel.id
         if channel_id in self.game_list:
             await ctx.send("There's already a game running in this channel!")
+            return
 
-        else:
-            extra_users = set()
-            for user in other_users:
+        extra_users = set()
+        if data.get('other_users'):
+            for user in data['other_users']:
                 search_id = re.search('^<@!(.*)>$', user)
                 if search_id:
                     extra_users.add(search_id.group(1))
 
-            if versus and (not extra_users or len(extra_users) == 1 and str(user_id) in extra_users):
-                await ctx.send("You have to mention at least one other player.")
-                return
+        if data['game_type'] == GameType.substr_vs and (not extra_users or len(extra_users) == 1 and str(user_id) in extra_users):
+            await ctx.send("You have to mention at least one other player.")
+            return
 
-            self.game_list[channel_id] = SubstrManager(user_id, channel_id, extra_users, open_game, versus)
-            print(f"Starting game in channel {channel_id} by host {user_id} with extra users {extra_users} (Versus = {versus})")
-            await self.game_list[channel_id].start(
-                lambda data: self._on_round_end(channel_id, data),
-                lambda reason: self._on_wrong_answer(channel_id, reason)
-            )
+        game_data = {
+            'channel_id': channel_id,
+            'user_id': user_id,
+            'game_type': data['game_type'],
+            'open_game': data['open_game'],
+            'other_users': extra_users
+        }
+
+        self.game_list[channel_id] = GameManager(ctx, game_data)
+        print(f"Starting {data['game_type']} game in channel {channel_id} by host {user_id} with extra users {extra_users}")
+        await self.game_list[channel_id].start()
 
     @commands.command(
         help="Stops the word game in the current channel. "
@@ -147,81 +176,4 @@ class SubstrCommands(commands.Cog):
         user_id = message.author.id
         if channel_id in self.game_list:
             await self.game_list[channel_id].submit_word(user_id, message.content.lower())
-
-    def _game_update_message(self, data):
-        message = "```ml\n"
-
-        #previous round result
-        if data.get('result'):
-            message += f"{data['result']}\n"
-
-        if data.get('remaining_letters'):
-            message += f"Letters to bonus: {data['remaining_letters']}\n"
-
-        #lives
-        if data.get('lives') is not None and data.get('delta_lives'):
-            message += f"Lives: {data['lives'] - data['delta_lives']} -> {data['lives']}\n"
-        elif data.get('lives') is not None:
-            message += f"Lives: {data['lives']}\n"
-
-        #score
-        if data.get('points'):
-            message += f"Score: {data['points']}\n"
-
-        #substring
-        if data.get('substr') and data['substr'] != const.GAME_OVER:
-            message += f"Enter a word containing '{data['substr']}' (time: {data['guess_time']}s)\n"
-        elif data.get('substr'):
-            message += "GAME OVER\n"
-
-        message += "```"
-
-        if data.get('turn'):
-            message += f"<@{data['turn']}>"
-
-        if data.get('eliminated'):
-            message += f"<@{data['eliminated']}> has been eliminated."
-
-        if data.get('winner'):
-            message += f"\nGG, the winner is <@{data['winner']}>!"
-
-
-        return message
-
-    async def _on_round_end(self, channel_id, data):
-        channel = self.bot.get_channel(channel_id)
-        await channel.send(self._game_update_message(data))
-        
-        if data.get('winner'):
-            self.game_list.pop(channel_id)
-
-        elif data.get('substr') == const.GAME_OVER:
-            guild_id = channel.guild.id
-            user_id = self.game_list[channel_id].host_id
-            solo = len(self.game_list[channel_id].user_list) == 1
-
-            self.game_list.pop(channel_id)
-
-            if not solo: #only store single player high scores
-                return
-
-            try:
-                #Insert score if it doesn't exist
-                self.cur.execute(f"""
-                    INSERT INTO leaderboards (guild_id, user_id, score) 
-                    VALUES ({guild_id}, {user_id}, {data['points']})
-                    ON CONFLICT (guild_id, user_id)
-                    DO UPDATE SET score = GREATEST(EXCLUDED.score, leaderboards.score);""")
-
-                self.conn.commit()
-
-            except Exception as e:
-                print(f"Error updating score for user {user_id}: {e}")
-
-    async def _on_wrong_answer(self, channel_id, reason):
-        channel = self.bot.get_channel(channel_id)
-        await channel.send(reason)
-
             
-
-    
