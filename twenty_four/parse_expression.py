@@ -58,7 +58,7 @@ def parse_expression(expression): #can't use eval since string isn't trusted
             if curr_operand is None:
                 if char in '*/':
                     raise InvalidExpressionException("*/ without preceding operand", expression)
-                elif char in '+=':
+                elif char in '+-':
                     if seen_two_operators:
                         raise InvalidExpressionException("More than two +- operators in a row", expression)
 
@@ -74,6 +74,9 @@ def parse_expression(expression): #can't use eval since string isn't trusted
                 operators.append(mul)
             elif char == '/':
                 operators.append(div)
+
+            if negative_op:
+                curr_operand *= -1
 
             operands.append(curr_operand)
             curr_operand = None
@@ -100,7 +103,7 @@ def parse_expression(expression): #can't use eval since string isn't trusted
 
     for i in range(len(operators)):
         operands[0] = operators[i](operands[0], operands[i+1])
-    
+
     return operands[0]
 
 def _return_closing_bracket(open_bracket):
