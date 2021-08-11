@@ -83,8 +83,6 @@ class SubstrGame(BaseGame):
 
         self._length_weights[3] += floor(self._length_weights[2] / 10.0)
         self._length_weights[2] = floor(self._length_weights[2] * 9 / 10.0)
-
-        #self.guess_time = max(const.MIN_TIME_SECONDS, self.guess_time * 9 / 10.0)
         #minimum word length scaling?
 
     def _update_used_letters(self, user_word):

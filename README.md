@@ -10,6 +10,9 @@ Python, pipenv
 You will need to define your own discord bot key in a .env file,
 created in the root directory, with the tag DISCORD_TOKEN.
 
+You'll also need to define a DATABASE_URL, which links to a postgres
+database.
+
 You can then run the bot with 
 `pipenv run python bot.py`
 

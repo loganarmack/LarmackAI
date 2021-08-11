@@ -96,7 +96,7 @@ class GameCommands(commands.Cog):
             'other_users': extra_users
         }
 
-        self.game_list[channel_id] = GameManager(ctx, game_data)
+        self.game_list[channel_id] = GameManager(ctx, game_data, self._on_game_end)
         print(f"Starting {data['game_type']} game in channel {channel_id} by host {user_id} with extra users {extra_users}")
         await self.game_list[channel_id].start()
 
@@ -175,5 +175,25 @@ class GameCommands(commands.Cog):
         channel_id = message.channel.id
         user_id = message.author.id
         if channel_id in self.game_list:
-            await self.game_list[channel_id].submit_word(user_id, message.content.lower())
+            await self.game_list[channel_id].submit(user_id, message.content.lower())
             
+    def _on_game_end(self, ctx, data):
+        guild_id = ctx.guild.id
+        channel_id = ctx.channel.id
+        user_id = self.game_list[channel_id].host_id
+        game_type = self.game_list[channel_id].game_type
+        solo = len(self.game_list[channel_id].user_list) == 1
+
+        self.game_list.pop(channel_id)
+
+        if game_type == GameType.substr and solo: #update highscore
+            try:
+                self.cur.execute(f"""
+                    INSERT INTO leaderboards (guild_id, user_id, score) 
+                    VALUES ({guild_id}, {user_id}, {data['points']})
+                    ON CONFLICT (guild_id, user_id)
+                    DO UPDATE SET score = GREATEST(EXCLUDED.score, leaderboards.score);""")
+
+                self.conn.commit()
+            except Exception as e:
+                print(f"Error updating score for user {user_id}: {e}")

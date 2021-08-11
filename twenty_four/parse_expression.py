@@ -26,6 +26,7 @@ def parse_expression(expression): #can't use eval since string isn't trusted
     operands = []
     operators = []
     open_bracket = None
+    bracket_val = None
     capture_group = ''
 
     for char in expression:
@@ -33,7 +34,7 @@ def parse_expression(expression): #can't use eval since string isn't trusted
             raise InvalidExpressionException("Invalid character in expression", expression)
 
         elif char in ')]}' and char == _return_closing_bracket(open_bracket): # close bracket
-            curr_operand = parse_expression(capture_group)
+            bracket_val = parse_expression(capture_group)
             open_bracket = None
             capture_group = ''
 
@@ -48,6 +49,11 @@ def parse_expression(expression): #can't use eval since string isn't trusted
             open_bracket = char
         
         elif char.isdigit():
+            if bracket_val:
+                operators.append(mul)
+                operands.append(bracket_val)
+                bracket_val = None
+                
             if curr_operand is None:
                 curr_operand = int(char)
 
@@ -55,6 +61,9 @@ def parse_expression(expression): #can't use eval since string isn't trusted
                 curr_operand = curr_operand * 10 + int(char)
 
         elif char in '*/+-':
+            if bracket_val:
+                curr_operand = bracket_val
+                bracket_val = None
             if curr_operand is None:
                 if char in '*/':
                     raise InvalidExpressionException("*/ without preceding operand", expression)

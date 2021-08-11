@@ -45,6 +45,10 @@ class MultiSubstrGame(SubstrGame):
             return True
 
         return False
+
+    def _increment_weights(self):
+        self._guess_time = max(const.MIN_TIME_SECONDS, self._guess_time * 9 / 10.0)
+        super()._increment_weights()
     
     def _choose_substr(self):
         self._substr_rep_curr = 0

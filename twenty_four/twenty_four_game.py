@@ -21,47 +21,80 @@ class TwentyFourGame(BaseGame):
         self._choose_cards()
 
     def _choose_cards(self):
+        if len(self._deck) < const.NUM_CARDS:
+            self._deck = self._starting_deck
+            
         self._cards = set(sample(self._deck, const.NUM_CARDS))
         self._deck = self._deck - self._cards
+        self._possible_answers = self._find_answers()
 
-    def submit_answer(self, answer):
+    def _check_answer(self, answer):
         correct = True
         reason = None
 
-        # Check that answer contains the right amount of numbers
-        answer_nums = re.findall(r'\d+', answer)
-        if len(answer_nums) != const.NUM_CARDS:
-            correct = False
-            reason = "Your answer must use each card exactly once."
-
-        # Check that each number is from the cards
-        else:
-            for card in self._cards:
-                if str(card[0]) not in answer_nums:
-                    correct = False
-                    reason = "Your answer must use each card exactly once."
-                    break
-                else:
-                    answer_nums.remove(str(card[0]))
-        
-        # If numbers are correct, check that expression is valid and sums to 24
-        if correct: 
-            try:
-                if parse_expression(answer) != const.TARGET_SUM:
-                    correct = False
-                    reason = f"Your answer doesn't equal {const.TARGET_SUM}"
-            except InvalidExpressionException as e:
+        # Check if answer is impossible, and there are no possible answers
+        if answer.lower() == const.IMPOSSIBLE:
+            is_answer = len(self._possible_answers) != 0
+            if is_answer:
                 correct = False
-                reason = "That's not a valid expression!"
+                reason = "It's not impossible."
+            else:
+                correct = True
+        
+        else:
+            # Check that answer contains the right amount of numbers
+            answer_nums = re.findall(r'\d+', answer)
+            if len(answer_nums) != const.NUM_CARDS:
+                correct = False
+                reason = "Your answer must use each card exactly once."
 
-        possible_answers = self._find_answers()
-        random_answer = 'impossible' if len(possible_answers) == 0 else choice(possible_answers)
+            # Check that each number is from the cards
+            else:
+                for card in self._cards:
+                    if str(card[0]) not in answer_nums:
+                        correct = False
+                        reason = "Your answer must use each card exactly once."
+                        break
+                    else:
+                        answer_nums.remove(str(card[0]))
+            
+            # If numbers are correct, check that expression is valid and sums to 24
+            if correct: 
+                try:
+                    if parse_expression(answer) != const.TARGET_SUM:
+                        correct = False
+                        reason = f"Your answer doesn't equal {const.TARGET_SUM}"
+                except InvalidExpressionException as e:
+                    correct = False
+                    reason = "That's not a valid expression!"
+            
+        if not correct:
+            random_answer = 'impossible' if len(self._possible_answers) == 0 else choice(self._possible_answers)
+            reason += f"\nA possible answer for this was {random_answer}."
 
-        return correct, reason, random_answer
+        return correct, reason
 
-    def start(self, round_end_callback, wrong_answer_callback):
+    async def _round_end(self, message):
+        self._choose_cards()
+        message += f"\nYour new cards are {self._cards}"
+        await self._round_end_callback(message)
+
+    async def submit(self, expression):
+        correct, reason = self._check_answer(expression)
+
+        if not correct:
+            await self._wrong_answer_callback(reason)
+            await self._round_end("")
+        else:
+            await self._round_end(f"Correct!")
+
+    async def start(self, round_end_callback, wrong_answer_callback):
         self._reset()
         self._choose_cards()
+        self._round_end_callback = round_end_callback
+        self._wrong_answer_callback = wrong_answer_callback
+
+        await round_end_callback(f"Your cards are {self._cards}")
 
     def _find_answers(self):
         answers = []
@@ -86,12 +119,11 @@ class TwentyFourGame(BaseGame):
                     answer += f"{permutation[-1]}"
 
                     answers.append(answer)
-                    print(val, answer)
                     break
 
         return answers
 
-    def stop(self):
+    async def stop(self):
         pass
         
             
