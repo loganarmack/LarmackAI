@@ -97,6 +97,8 @@ class TwentyFourGame(BaseGame):
         await round_end_callback(f"Your cards are {self._cards}")
 
     def _find_answers(self):
+        #TODO: this doesn't find solutions of the form (a-b)(c-d)
+        # will need to rethink this algorithm
         answers = []
         # Check all possible permutations of cards
         for permutation in permutations([card[0] for card in self._cards]):

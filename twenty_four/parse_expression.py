@@ -46,6 +46,10 @@ def parse_expression(expression): #can't use eval since string isn't trusted
                 operators.append(mul)
                 operands.append(curr_operand)
                 curr_operand = None
+            elif bracket_val:
+                operators.append(mul)
+                operands.append(bracket_val)
+                bracket_val = None
             open_bracket = char
         
         elif char.isdigit():
