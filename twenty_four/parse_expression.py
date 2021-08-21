@@ -94,6 +94,8 @@ def parse_expression(expression): #can't use eval since string isn't trusted
     
     if open_bracket:
         raise InvalidExpressionException("Unclosed bracket", expression)
+    elif curr_operand is None and bracket_val: 
+        operands.append(bracket_val)
     elif curr_operand is None:
         raise InvalidExpressionException("Trailing operator", expression)
     else:
