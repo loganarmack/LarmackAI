@@ -41,9 +41,11 @@ class MusicCommands(commands.Cog):
         # TODO: allow getting songs from soundcloud, spotify, musescore
 
         channel = ctx.message.author.voice.channel
-        await channel.connect()
-
         voice_client = ctx.message.guild.voice_client
+
+        if not voice_client:
+            await channel.connect()
+            voice_client = ctx.message.guild.voice_client
 
         try:
             async with ctx.typing():
