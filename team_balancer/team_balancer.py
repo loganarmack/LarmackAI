@@ -22,9 +22,9 @@ current_players = [
     ("70IQ", ("adc")),
     ("Dee See", ()),
     ("Dragon Stormz", ()),
-    ("oyeeh", ("top", "jg")),
+    ("maruuko", ()),
     ("meltthesnow", ("jg")),
-    ("talons gf", ("adc")),
+    ("suntuze", ()),
     ("honeydewkeki", ("top", "jg", "mid", "supp"))
 ]
 

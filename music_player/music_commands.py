@@ -1,57 +1,87 @@
 from discord.ext import commands
-import youtube_dl
+import discord
+from music_player.YTDLSource import YTDLSource
 
 
-class MusicComands(commands.Cog):
+class MusicCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        ytdl_format_options = {
-            'format': 'bestaudio/best',
-            'restrictfilenames': True,
-            'noplaylist': True,
-            'nocheckcertificate': True,
-            'ignoreerrors': False,
-            'logtostderr': False,
-            'quiet': True,
-            'no_warnings': True,
-            'default_search': 'auto',
-            # bind to ipv4 since ipv6 addresses cause issues sometimes
-            'source_address': '0.0.0.0'
-        }
-
-        self.ffmpeg_options = {
-            'options': '-vn'
-        }
-
-        self.ytdl = youtube_dl.YoutubeDL(ytdl_format_options)
+    @commands.command(
+        brief="Joins the voice channel."
+    )
+    async def join(self, ctx):
+        if not ctx.message.author.voice:
+            await ctx.send("You're not connected to a voice channel.")
+        else:
+            channel = ctx.message.author.voice.channel
+            await channel.connect()
 
     @commands.command(
-        help="Starts a game in the current channel. "
-        + "You must mention the game type (substr or 24) "
-        + "You can metion specific users after the command to add "
-        + "them to your game, or allow anyone to pitch in using the keyword 'any'.",
-        brief="Starts a game in the current channel."
+        brief="Leaves the voice channel."
     )
-    async def play(self, ctx, game, *other_users):
-        open_game = other_users and other_users[0].lower() in [
-            "any", "open", "all"]
+    async def leave(self, ctx):
+        voice_client = ctx.message.guild.voice_client
 
-        if not game:
-            await ctx.send("You must specify a game type.")
-
-        game_type = None
-        if game.lower() in ["substr", "word"]:
-            game_type = GameType.substr
-        elif game.lower() in ["24", "twenty_four", "24game", "twenty"]:
-            game_type = GameType.twenty_four
+        if not voice_client.is_connected():
+            await ctx.send("I'm not in a voice channel.")
         else:
-            await ctx.send("Invalid game type.")
+            await voice_client.disconnect()
+
+    @commands.command(
+        help="Plays a song in the current voice channel. "
+        + "You must be connected to a voice channel to run this command.",
+        brief="Plays a song in the current voice channel."
+    )
+    async def play(self, ctx, song):
+        if not ctx.message.author.voice:
+            await ctx.send("You're not connected to a voice channel.")
             return
 
-        args = {
-            'game_type': game_type,
-            'open_game': open_game,
-            'other_users': other_users
-        }
-        await self._start_game(ctx, args)
+        # TODO: allow getting songs from soundcloud, spotify, musescore
+
+        channel = ctx.message.author.voice.channel
+        await channel.connect()
+
+        voice_client = ctx.message.guild.voice_client
+
+        try:
+            async with ctx.typing():
+                filename, title = await YTDLSource.from_url(song, loop=self.bot.loop)
+                voice_client.play(discord.FFmpegPCMAudio(
+                    executable="ffmpeg.exe", source=filename))
+                await ctx.send(f"**Now Playing:** {title}")
+
+        except Exception as e:
+            print(e)
+            await ctx.send("I couldn't find that song.")
+
+    @commands.command(
+        brief="Plays a song in the current voice channel."
+    )
+    async def pause(self, ctx):
+        voice_client = ctx.message.guild.voice_client
+        if voice_client.is_playing():
+            await voice_client.pause()
+        else:
+            await ctx.send("The bot is not playing anything at the moment.")
+
+    @commands.command(
+        brief="Resumes playing a song."
+    )
+    async def resume(self, ctx):
+        voice_client = ctx.message.guild.voice_client
+        if voice_client.is_paused():
+            await voice_client.resume()
+        else:
+            await ctx.send("The bot was not playing anything before this. Use play_song command")
+
+    @commands.command(
+        brief="Stops playing a song."
+    )
+    async def stop(self, ctx):
+        voice_client = ctx.message.guild.voice_client
+        if voice_client.is_playing():
+            await voice_client.stop()
+        else:
+            await ctx.send("The bot is not playing anything at the moment.")
