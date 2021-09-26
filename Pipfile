@@ -4,10 +4,11 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-"discord.py" = "*"
+"discord.py" = {extras = ["voice"], version = "*"}
 python-dotenv = "*"
 asyncio = "*"
 psycopg2 = "*"
+youtube-dl = "*"
 
 [dev-packages]
 
