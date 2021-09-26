@@ -54,7 +54,7 @@ class MusicCommands(commands.Cog):
                 await ctx.send(f"**Now Playing:** {title}")
 
         except Exception as e:
-            print(e)
+            print(f"{repr(e)}: {e}")
             await ctx.send("I couldn't find that song.")
 
     @commands.command(
