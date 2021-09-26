@@ -8,6 +8,7 @@ name = "pypi"
 python-dotenv = "*"
 asyncio = "*"
 psycopg2 = "*"
+youtube-dl = "*"
 
 [dev-packages]
 
