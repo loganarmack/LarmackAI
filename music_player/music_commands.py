@@ -48,8 +48,7 @@ class MusicCommands(commands.Cog):
         try:
             async with ctx.typing():
                 filename, title = await YTDLSource.from_url(song, loop=self.bot.loop)
-                voice_client.play(discord.FFmpegPCMAudio(
-                    executable="ffmpeg.exe", source=filename))
+                voice_client.play(discord.FFmpegPCMAudio(source=filename))
                 await ctx.send(f"**Now Playing:** {title}")
 
         except Exception as e:
