@@ -9,6 +9,7 @@ python-dotenv = "*"
 asyncio = "*"
 psycopg2 = "*"
 youtube-dl = "*"
+ffmpeg = "*"
 
 [dev-packages]
 
