@@ -78,7 +78,7 @@ class MusicCommands(commands.Cog):
             await ctx.send("The bot was not playing anything before this. Use play_song command")
 
     @commands.command(
-        brief="Stops playing a song."
+        brief="Stops the current song."
     )
     async def stop(self, ctx):
         voice_client = ctx.message.guild.voice_client
