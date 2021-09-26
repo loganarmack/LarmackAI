@@ -1,7 +1,7 @@
 from discord.ext import commands
 import discord
 from music_player.YTDLSource import YTDLSource
-import os.path
+from os import path
 
 
 class MusicCommands(commands.Cog):
