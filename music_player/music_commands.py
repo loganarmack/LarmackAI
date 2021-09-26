@@ -1,6 +1,7 @@
 from discord.ext import commands
 import discord
 from music_player.YTDLSource import YTDLSource
+import path
 
 
 class MusicCommands(commands.Cog):
@@ -49,9 +50,13 @@ class MusicCommands(commands.Cog):
 
         try:
             async with ctx.typing():
+                file_path = path.abspath(__file__)
+                dir_path = path.dirname(file_path)
+                ffmpeg_path = path.join(dir_path, 'ffmpeg.exe')
+
                 filename, title = await YTDLSource.from_url(song, loop=self.bot.loop)
                 voice_client.play(discord.FFmpegPCMAudio(
-                    source=filename))
+                    executable=ffmpeg_path, source=filename))
                 await ctx.send(f"**Now Playing:** {title}")
 
         except Exception as e:
