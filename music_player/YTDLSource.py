@@ -33,6 +33,12 @@ class YTDLSource(discord.PCMVolumeTransformer):
         self.url = ""
 
     @classmethod
+    async def get_title(cls, url, loop=None):
+        loop = loop or asyncio.get_event_loop()
+        data = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=False))
+        return data.get('title')
+
+    @classmethod
     async def from_url(cls, url, *, loop=None):
         loop = loop or asyncio.get_event_loop()
         data = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=False))
@@ -40,10 +46,9 @@ class YTDLSource(discord.PCMVolumeTransformer):
         if 'entries' in data:
             data = data['entries'][0]
 
-        title = data['title']
         filename = ytdl.prepare_filename(data)
 
         if not os.path.exists(filename):
             ytdl.download([url])
 
-        return filename, title
+        return filename

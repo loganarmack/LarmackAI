@@ -35,7 +35,7 @@ class AudioController:
 
             self.voice_client.play(discord.FFmpegPCMAudio(
                 song[0]), after=lambda e: self.next_song(e))
-            await self.tc.send(f"**Now Playing:** {song[1]}")
+            await self.tc.send(f"**Now Playing:** {song[1]} {song[2]}")
 
         except Exception as e:
             print(f"{repr(e)}: {e}")
@@ -48,25 +48,36 @@ class AudioController:
         await self._add_song(url, True)
 
     async def _add_song(self, url, play_next):
-        filename, title = await self.url_to_song(url)
+        title = await self._get_title(url)
+        await self.tc.send(f"**Adding** {title} to the queue.")
+
+        filename = await self._download_song(url)
         if play_next:
-            self.queue.appendLeft((filename, title))
+            self.queue.appendLeft((filename, title, url))
         else:
-            self.queue.append((filename, title))
+            self.queue.append((filename, title, url))
 
         if not (self.voice_client and self.voice_client.is_playing()):
             await self.play_song(self.queue[-1])
 
-    async def url_to_song(self, url):
+    async def _get_title(self, url):
+        title = "Unknown"
+        if 'youtube' in url:
+            title = await YTDLSource.get_title(url, loop=self.bot.loop)
+        else:
+            print("Error fetching song title.")
+
+        return title
+
+    async def _download_song(self, url):
         filename = ""
-        title = ""
 
         if 'youtube' in url:
-            filename, title = await YTDLSource.from_url(url, loop=self.bot.loop)
+            filename = await YTDLSource.from_url(url, loop=self.bot.loop)
         else:
             print("Url not supported.")
 
-        return filename, title
+        return filename
 
     async def display_queue(self):
         if len(self.queue) == 0:
@@ -74,9 +85,16 @@ class AudioController:
         else:
             msg = "**Queue:**\n"
             for i, song in enumerate(self.queue):
-                msg += f"{i + 1}: {song[1]}\n"
+                msg += f"{i + 1}: {song[1]} {song[2]}\n"
 
             await self.tc.send(msg)
+
+    async def now_playing(self):
+        if not self.voice_client or len(self.queue) == 0:
+            await self.tc.send("There's no music playing.")
+        else:
+            song = self.queue[-1]
+            await self.tc.send(f"**Now Playing:** {song[1]} {song[2]}")
 
     async def skip(self):
         if not self.voice_client or len(self.queue) == 0:
