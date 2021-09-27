@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from discord.ext import commands
 from game_commands import GameCommands
 from music_player.music_commands import MusicCommands
+from team_balancer.team_balancer_commands import TeamBalancerCommands
 
 
 class LarmackBot(commands.Bot):
@@ -15,6 +16,7 @@ class LarmackBot(commands.Bot):
 
         self.add_cog(GameCommands(self))
         self.add_cog(MusicCommands(self))
+        self.add_cog(TeamBalancerCommands(self))
         SubstrGame.load()
 
     async def on_ready(self):
