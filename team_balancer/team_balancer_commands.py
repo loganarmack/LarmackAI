@@ -7,10 +7,11 @@ class TeamBalancerCommands(commands.Cog):
         self.bot = bot
 
     @commands.command(
-        name='start-balance',
+        name='start-balancer',
+        aliases=['new-balancer', 'new-team-balancer', 'start-team-balancer'],
         brief="Start a new custom game to balance."
     )
-    async def start_balance(self, ctx, game_mode=None):
+    async def start_balancer(self, ctx, game_mode=None):
         gamemode = "aram" if game_mode and game_mode.lower() == "aram" else "sr"
         if game_mode and game_mode.lower() == "aram":
             self.team_balancer = TeamBalancer(gamemode)
@@ -60,16 +61,20 @@ class TeamBalancerCommands(commands.Cog):
         brief="Compute the best teams for the set of players."
     )
     async def compute_team(self, ctx):
-        num_players = self.team_balancer.get_num_players()
-        gamemode = self.team_balancer.gamemode
-        if num_players < 6 and gamemode == "aram" \
-                or gamemode == "sr" and num_players % 2 == 1 and num_players < 8:
-
+        if not self._enough_players():
             await ctx.send("Not enough players to balance.")
             return
 
         teams = self.team_balancer.balance()
         await ctx.send(self._teams_to_msg(teams))
+
+    def _enough_players(self):
+        gamemode = self.team_balancer.gamemode
+        num_players = self.team_balancer.get_num_players()
+        if gamemode == "aram":
+            return num_players >= 6
+        else:
+            return num_players >= 8 and num_players % 2 == 0
 
     @commands.command(
         name='reroll', brief="Choose a new best team."
