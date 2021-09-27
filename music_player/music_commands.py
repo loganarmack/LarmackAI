@@ -52,21 +52,24 @@ class MusicCommands(commands.Cog):
         await self._play(ctx, song, True)
 
     async def _play(self, ctx, song, play_next):
+        if not ctx.message.author.voice:
+            await ctx.send("You're not connected to a voice channel.")
+            return
+
+        audiocontroller = self._get_audio_controller(ctx, make_new=True)
+        if not audiocontroller.voice_client:
+            audiocontroller.voice_client = await audiocontroller.vc.connect()
+
         song_url = await self._song_to_url(ctx, song)
         if not song_url:
             return
 
-        audiocontroller = self._get_audio_controller(ctx, make_new=True)
         if play_next:
             await audiocontroller.add_song_next(song_url)
         else:
             await audiocontroller.add_song(song_url)
 
     async def _song_to_url(self, ctx, song):
-        if not ctx.message.author.voice:
-            await ctx.send("You're not connected to a voice channel.")
-            return
-
         if self._is_url(song[0]):
             return song[0]
 
