@@ -1,6 +1,7 @@
 import discord
 import asyncio
 import youtube_dl
+import os
 
 ytdl_format_options = {
     'format': 'bestaudio/best',
@@ -41,6 +42,8 @@ class YTDLSource(discord.PCMVolumeTransformer):
 
         title = data['title']
         filename = ytdl.prepare_filename(data)
-        ytdl.download([url])
+
+        if not os.path.exists(filename):
+            ytdl.download([url])
 
         return filename, title
