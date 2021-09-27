@@ -47,6 +47,21 @@ class MusicCommands(commands.Cog):
         await audiocontroller.add_song(song)
 
     @commands.command(
+        name="play-next",
+        help="Plays a song in the current voice channel. "
+        + "You must be connected to a voice channel to run this command.",
+        brief="Adds a song to the front of the queue."
+    )
+    async def play_next(self, ctx, song):
+        if not ctx.message.author.voice:
+            await ctx.send("You're not connected to a voice channel.")
+            return
+
+        audiocontroller = self._get_audio_controller(ctx, make_new=True)
+
+        await audiocontroller.add_song_next(song)
+
+    @commands.command(
         brief="Pauses the song in the current voice channel."
     )
     async def pause(self, ctx):
