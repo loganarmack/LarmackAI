@@ -1,6 +1,8 @@
 from music_player.YTDLSource import YTDLSource
 import discord
 from collections import deque
+import os
+from timer import Timer
 
 
 class AudioController:
@@ -12,14 +14,25 @@ class AudioController:
         self.voice_client = None
 
         self.queue = deque()
+        self.current_song = None
+        self.afk_timeout = None
+
+    def _on_stop(self, song_end=False):
+        os.remove(self.current_song[0])
+        self.current_song = None
+        if not song_end:
+            self.voice_client.stop()
 
     def next_song(self, error):
+        self._on_stop(self, song_end=True)
+
         if error:
             print(error)
             return
 
         if len(self.queue) <= 1:
             self.queue.clear()
+            self.afk_timeout = Timer(300, self.voice_client.disconnect())
             return
 
         self.queue.popleft()
@@ -29,6 +42,7 @@ class AudioController:
         self.bot.loop.create_task(play_next_coro)
 
     async def play_song(self, song):
+        self.current_song = song
         try:
             if not self.voice_client:
                 self.voice_client = await self.vc.connect()
@@ -48,6 +62,10 @@ class AudioController:
         await self._add_song(url, True)
 
     async def _add_song(self, url, play_next):
+        if self.afk_timeout:
+            self.afk_timeout.cancel()
+            self.afk_timeout = None
+
         title = await self._get_title(url)
         await self.tc.send(f"**Adding** {title} to the queue.")
 
@@ -119,7 +137,7 @@ class AudioController:
             await self.tc.send("There's no music playing.")
         else:
             self.queue.clear()
-            self.voice_client.stop()
+            self._on_stop()
 
     async def connect(self):
         if self.voice_client:
