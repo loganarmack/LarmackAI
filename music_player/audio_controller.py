@@ -24,7 +24,7 @@ class AudioController:
             self.voice_client.stop()
 
     def next_song(self, error):
-        self._on_stop(self, song_end=True)
+        self._on_stop(song_end=True)
 
         if error:
             print(error)
