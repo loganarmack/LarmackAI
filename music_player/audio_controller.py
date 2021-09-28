@@ -32,7 +32,8 @@ class AudioController:
 
         if len(self.queue) <= 1:
             self.queue.clear()
-            self.afk_timeout = Timer(300, self.voice_client.disconnect())
+            self.afk_timeout = Timer(
+                300, self._on_afk, loop=self.bot.loop)
             return
 
         self.queue.popleft()
@@ -118,7 +119,7 @@ class AudioController:
         if not self.voice_client or len(self.queue) == 0:
             await self.tc.send("There's no music playing.")
         else:
-            self.voice_client.stop()
+            self._on_stop()
 
     async def pause(self):
         if not self.voice_client or not self.voice_client.is_playing():
@@ -152,3 +153,7 @@ class AudioController:
         else:
             self.queue.clear()
             await self.voice_client.disconnect()
+
+    async def _on_afk(self):
+        await self.voice_client.disconnect()
+        await self.tc.send("I've left the call since I was AFK.")
