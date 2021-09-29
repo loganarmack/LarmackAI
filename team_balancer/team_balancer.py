@@ -28,6 +28,15 @@ class TeamBalancer:
         self.players.append((name, roles))
         return True
 
+    def remove_player(self, name):
+        for index, player in enumerate(self.players):
+            if player[0].lower() == name.lower():
+                del self.players[index]
+                return True
+
+        return False
+        
+
     def balance(self):
         self.used_teams = []
         num_players = len(self.players)
@@ -73,7 +82,7 @@ class TeamBalancer:
                         scores[num].append(self.player_data[name]['overall'])
                     else:
                         scores[num].append(
-                            self.player_data[name]['roles'][i] + self.player_data[name]['main_bonus'])
+                            self.player_data[name]['roles'][i])
 
             if not skip:
                 skill_gap = 0
@@ -128,12 +137,10 @@ class TeamBalancer:
 
             for row in reader:
                 name = row[0].lower().replace(" ", "")
-                roles = [int(i) for i in row[1:-1]]
-                main_bonus = int(row[-1])
-                overall = sum(int(role) for role in roles) + main_bonus
+                roles = [int(i) for i in row[1:]]
+                overall = sum(int(role) for role in sorted(roles)[:3])
 
                 TeamBalancer.player_data[name] = {
                     'roles': roles,
-                    'main_bonus': main_bonus,
                     'overall': overall
                 }

@@ -19,7 +19,7 @@ class TeamBalancerCommands(commands.Cog):
             self.team_balancer = TeamBalancer(gamemode)
 
         msg = f"Starting a new balanced {gamemode} custom game. \n"
-        msg += "Please use !add-player to enter your summoner name, without spaces"
+        msg += "Please use !add-player to enter your real name, without spaces"
         if gamemode == "sr":
             msg += ", followed by any roles you **DON'T** want to play."
         else:
@@ -32,6 +32,10 @@ class TeamBalancerCommands(commands.Cog):
         brief="Add a player to the game."
     )
     async def join_game(self, ctx, summoner_name, *roles):
+        if not self.team_balancer:
+            await ctx.send("There's no balancer running.")
+            return 
+
         fixed_roles = set()
         for role in roles:
             if "top" in role.lower() or "tp" in role.lower():
@@ -109,3 +113,19 @@ class TeamBalancerCommands(commands.Cog):
         msg += f"(Skill gap = {teams[2]})"
 
         return msg
+
+    @commands.command(
+        name="remove-player",
+        brief="removes a player from the game",
+    )
+    async def remove_player(self, ctx, name):
+        if not self.team_balancer:
+            await ctx.send("There's no balancer running.")
+            return
+
+        if self.team_balancer.remove_player(name):
+            num_players = self.team_balancer.get_num_players()
+            await ctx.send(f"{name} has been removed from the game. {num_players} are in the game.")
+
+        else:
+            await ctx.send(f"{name} is not in the game.")
