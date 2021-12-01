@@ -28,6 +28,14 @@ class TeamBalancer:
         self.players.append((name, roles))
         return True
 
+    def remove_player(self, name):
+        for index, player in enumerate(self.players):
+            if player[0].lower() == name.lower():
+                del self.players[index]
+                return True
+
+        return False
+
     def balance(self):
         self.used_teams = []
         num_players = len(self.players)
@@ -135,7 +143,7 @@ class TeamBalancer:
             for row in reader:
                 name = row[0].lower().replace(" ", "")
                 roles = [int(i) for i in row[1:]]
-                overall = sum(sorted(roles, reverse=True)[:3])
+                overall = sum(int(role) for role in sorted(roles)[:3])
 
                 TeamBalancer.player_data[name] = {
                     'roles': roles,
