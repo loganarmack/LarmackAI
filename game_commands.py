@@ -92,7 +92,7 @@ class GameCommands(commands.Cog):
             'channel_id': channel_id,
             'user_id': user_id,
             'game_type': data['game_type'],
-            'open_game': data['open_game'],
+            'open_game': data.get('open_game'),
             'other_users': extra_users
         }
 

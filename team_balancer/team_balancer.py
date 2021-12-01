@@ -48,6 +48,7 @@ class TeamBalancer:
                 self.players) if self.gamemode == "sr" else itertools.combinations(self.players, break_point)
 
         min_skill_gap = 999
+        min_avg_gap = 999
         best_teams = []
 
         for iteration in team_iterations:
@@ -73,17 +74,22 @@ class TeamBalancer:
                         scores[num].append(self.player_data[name]['overall'])
                     else:
                         scores[num].append(
-                            self.player_data[name]['roles'][i] + self.player_data[name]['main_bonus'])
+                            self.player_data[name]['roles'][i])
 
             if not skip:
                 skill_gap = 0
+                avg_gap = abs(sum(scores[0]) - sum(scores[1]))
                 if self.gamemode == "aram":
                     skill_gap = abs(sum(scores[0]) - sum(scores[1]))
                 else:
                     for i in range(break_point):
                         skill_gap += abs(scores[0][i] - scores[1][i])
 
-                if skill_gap <= min_skill_gap:
+                if skill_gap <= min_skill_gap and avg_gap <= min_avg_gap:
+                    if avg_gap < min_avg_gap:
+                        min_avg_gap = avg_gap
+                        best_teams = []
+
                     if skill_gap < min_skill_gap:
                         best_teams = []
                         min_skill_gap = skill_gap
@@ -128,12 +134,10 @@ class TeamBalancer:
 
             for row in reader:
                 name = row[0].lower().replace(" ", "")
-                roles = [int(i) for i in row[1:-1]]
-                main_bonus = int(row[-1])
-                overall = sum(int(role) for role in roles) + main_bonus
+                roles = [int(i) for i in row[1:]]
+                overall = sum(sorted(roles, reverse=True)[:3])
 
                 TeamBalancer.player_data[name] = {
                     'roles': roles,
-                    'main_bonus': main_bonus,
                     'overall': overall
                 }
