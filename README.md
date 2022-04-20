@@ -1,5 +1,5 @@
 # LarmackAI
-A discord bot originally created as an interface for my substring game.
+A multipurpose discord bot with a variety of features
 
 ## Prerequisites:
 Python, pipenv
@@ -21,3 +21,4 @@ You can then run the bot with
 - A word game — you can play it using the !start command
 - Automated message reactions based off a complex sentiment analysis function
 - Pre-programmed responses to a vast set of triggers
+- A music bot that allows you to play songs in voice channels
