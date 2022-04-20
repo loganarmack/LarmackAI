@@ -22,3 +22,4 @@ You can then run the bot with
 - Automated message reactions based off a complex sentiment analysis function
 - Pre-programmed responses to a vast set of triggers
 - A music bot that allows you to play songs in voice channels
+- A cutsom game balancer for League of Legends for my friend group
